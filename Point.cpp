@@ -53,7 +53,7 @@ Point::~Point(void)
     
 }
 
-bool Point::isCloseTo(Point p, float tolerance)
+bool Point::isCloseTo(const Point p, float tolerance) const
 {
 	float diffX = abs(this->x_ - p.x_);
 	float diffY = abs(this->y_ - p.y_);

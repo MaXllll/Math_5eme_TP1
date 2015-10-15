@@ -9,7 +9,7 @@ class OpenGlWindow : public QOpenGLWidget
 public:
 	OpenGlWindow(Model* model);
 	Model* model;
-	void newBSpline();
+	void newPolygone();
 	void clear();
 
 protected:
@@ -20,34 +20,21 @@ protected:
 
 
 private:
-	//BSpline
-	void knot(int n, int c, int x[]);
-	void basis(int c, float t, int npts, int x[], float n[]);
-	void bspline(int npts, int k, int p1, int current);
-	void calculateBSpline(int i);
-	void initializeBSpline();
-	void paintBSpline();
+	std::vector<std::vector<Point>> _points = std::vector<std::vector<Point>>();
+	int _currentPolygone = -1;
+	Point _movingPoint;
+	bool _hasClick = false;
 
-	//B Surface
-	Point Decasteljau(float t, const std::vector<Point> &points);
-	void Decasteljau3D();
-	void CalculateBezier();
-	void initializeGrid();
-	void initializeControlPoints();
-	void paintBSurface();
+	//Points
+	void initializePolygone();
+	void paintPoints();
+
 
 	void paintGrid();
 
-	//Extrusion
-	void calculateSimpleExtrusion();
-	void calculateRotationExtrusion();
-	void paintExtrustion();
-
 	//Utils
-	Point* searchClosedPoint(Point click);
-
-	Point* movingPoint;
-	bool hasClick = false;
+	void searchClosedPoint(const Point click, const std::vector<std::vector<Point>>& points, Point& p) const;
+	void convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF) const;
 
 };
 
