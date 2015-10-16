@@ -13,20 +13,14 @@ public:
 	~Math_modelisation_2D_3D_QT();
 
 private slots:
-	void newBSpline();
+	void newCluster();
 	void clear();
 
 	void createPointMode();
 	void movePointMode();
 	void repeatPointMode();
 
-	void BSplineMode();
-	void ExtrusionMode();
-	void BSurfaceMode();
-
-	void WireFrameMode();
-
-	void TypeExtrusion();
+	void GrahanScan();
 
 private:
 	void createActions();
@@ -35,22 +29,12 @@ private:
 
 	QMenu *fileMenu;
 	QMenu *editMenu;
-	QMenu *editModeMenu;
 	QMenu *helpMenu;
 
 	QAction *newAct;
 	QAction *clearAct;
 
-	QAction *createPointAct;
-	QAction *movePointAct;
-	QAction *repeatPointAct;
-
-	QAction *BSplineAct;
-	QAction *ExtrusionAct;
-	QAction *BSurfaceAct;
-
-	QAction *WireFrameAct;
-	QAction *TypeExtrusionAct;
+	QAction *grahamScanAct;
 
 private:
 	Ui::Math_modelisation_2D_3D_QTClass ui;

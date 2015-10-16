@@ -9,8 +9,9 @@ class OpenGlWindow : public QOpenGLWidget
 public:
 	OpenGlWindow(Model* model);
 	Model* model;
-	void newPolygone();
+	void newCluster();
 	void clear();
+	void GrahanScan() const;
 
 protected:
 	void initializeGL();
@@ -21,13 +22,15 @@ protected:
 
 private:
 	std::vector<std::vector<Point>> _points = std::vector<std::vector<Point>>();
-	int _currentPolygone = -1;
+	int _currentCluster = -1;
 	Point _movingPoint;
 	bool _hasClick = false;
+	Point _baryCenter;
 
 	//Points
 	void initializePolygone();
-	void paintPoints();
+	void paintPoints() const;
+	void PaintBaryCenter() const;
 
 
 	void paintGrid();
@@ -35,6 +38,7 @@ private:
 	//Utils
 	void searchClosedPoint(const Point click, const std::vector<std::vector<Point>>& points, Point& p) const;
 	void convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF) const;
+	void ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const;
 
 };
 

@@ -43,9 +43,14 @@ void Widget::sliderValueChanged()
 	glWindow->repaint();
 }
 
-void Widget::newbSpline()
+void Widget::GrahanScan()
 {
-	glWindow->newPolygone();
+	glWindow->GrahanScan();
+}
+
+void Widget::NewCluster()
+{
+	glWindow->newCluster();
 }
 
 void Widget::repaint()

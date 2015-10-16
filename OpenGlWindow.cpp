@@ -129,16 +129,16 @@ void OpenGlWindow::initializeGL()
 void OpenGlWindow::initializePolygone()
 {
 	_movingPoint = Point();
-	newPolygone();
+	newCluster();
 }
 
-void OpenGlWindow::newPolygone()
+void OpenGlWindow::newCluster()
 {
-	_currentPolygone++;
+	_currentCluster++;
 	_points.push_back(std::vector<Point>());
 }
 
-void OpenGlWindow::paintPoints()
+void OpenGlWindow::paintPoints() const
 {
 	bsplineShader.Bind();
 
@@ -150,7 +150,7 @@ void OpenGlWindow::paintPoints()
 
 		convertPointToFloat(_points[i], pointsF);
 
-		if (pointsF.size() > 3){
+		if (pointsF.size() >= 3){
 			//pointsF.erase(pointsF.begin());
 			glGenVertexArrays(i + 1, &VAO);
 			glGenBuffers(i + 1, &VBO);
@@ -174,6 +174,16 @@ void OpenGlWindow::paintPoints()
 	bsplineShader.Unbind();
 }
 
+void OpenGlWindow::PaintBaryCenter() const
+{
+	std::vector<float> pointsF = std::vector<float>();
+	pointsF.push_back(_baryCenter.x_);
+	pointsF.push_back(_baryCenter.y_);
+	pointsF.push_back(_baryCenter.z_);
+
+	GLuint VAO = GLuint();
+	GLuint VBO = GLuint();
+}
 
 void OpenGlWindow::paintGL()
 {
@@ -206,6 +216,38 @@ void OpenGlWindow::paintGL()
 
 }
 
+
+#pragma region Grahan Scan
+
+void OpenGlWindow::GrahanScan() const
+{
+	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
+
+	Point baryCenter = Point(0.0f, 0.0f, 0.0f);
+	ComputeBaryCenter(outPoints, baryCenter);
+
+	Point _baryCenter = baryCenter;
+
+}
+
+void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
+{
+	int size = points.size();
+
+	for (size_t i = 0; i < size; i++)
+	{
+		baryCenter.x_ += points[i].x_;
+		baryCenter.y_ += points[i].y_;
+	}
+
+	baryCenter.x_ /= size;
+	baryCenter.y_ /= size;
+
+}
+
+
+#pragma endregion
+
 #pragma region Utils
 double convertViewportToOpenGLCoordinate(double x)
 {
@@ -222,7 +264,7 @@ void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 
 		if (model->splineMode == model->CREATEPOINT)
 		{
-			_points[_currentPolygone].push_back(clickP);
+			_points[_currentCluster].push_back(clickP);
 			this->update();
 		}
 		else if (model->splineMode == model->MOVEPOINT)
@@ -276,7 +318,7 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 
 void OpenGlWindow::clear()
 {
-	_currentPolygone = 0;
+	_currentCluster = 0;
 	_points.clear();
 	repaint();
 

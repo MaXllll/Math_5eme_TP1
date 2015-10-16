@@ -20,7 +20,8 @@ private slots:
 
 public:
 	Widget(Model* model);
-	void newbSpline();
+	void NewCluster();
+	void GrahanScan();
 	void repaint();
 	void clear();
 };
