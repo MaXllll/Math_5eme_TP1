@@ -11,7 +11,7 @@ public:
 	Model* model;
 	void newCluster();
 	void clear();
-	void GrahanScan() const;
+	void GrahamScan();
 
 protected:
 	void initializeGL();
@@ -29,7 +29,7 @@ private:
 
 	//Points
 	void initializePolygone();
-	void paintPoints() const;
+	void paintPoints(std::vector<float> pointsF) const;
 	void PaintBaryCenter() const;
 
 

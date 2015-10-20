@@ -13,7 +13,7 @@ Math_modelisation_2D_3D_QT::Math_modelisation_2D_3D_QT(QWidget *parent)
 	
 	QHBoxLayout* layout = new QHBoxLayout;
 
-	model.mode = model.BSPLINE;
+	model.mode = model.GRAHAMSCAN;
 
 	layout->addWidget(mainWidget = new Widget(&model));
 	centralWidget()->setLayout(layout);
@@ -48,13 +48,13 @@ void Math_modelisation_2D_3D_QT::movePointMode()
 
 void Math_modelisation_2D_3D_QT::repeatPointMode()
 {
-	model.splineMode = model.REPEATPOINT;
+	//model.splineMode = model.REPEATPOINT;
 	mainWidget->repaint();
 }
 
-void Math_modelisation_2D_3D_QT::GrahanScan()
+void Math_modelisation_2D_3D_QT::GrahamScan()
 {
-	mainWidget->GrahanScan();
+	mainWidget->GrahamScan();
 	mainWidget->repaint();
 }
 void Math_modelisation_2D_3D_QT::createActions()
@@ -74,7 +74,7 @@ void Math_modelisation_2D_3D_QT::createActions()
 	//Edit Menu
 	grahamScanAct = new QAction(tr("&Graham-Scan"), this);
 	grahamScanAct->setStatusTip(tr("Graham-Scan"));
-	connect(grahamScanAct, SIGNAL(triggered()), this, SLOT(GrahanScan()));
+	connect(grahamScanAct, SIGNAL(triggered()), this, SLOT(GrahamScan()));
 
 }
 

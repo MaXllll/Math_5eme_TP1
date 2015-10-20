@@ -27,7 +27,7 @@
 EsgiShader basicShader;
 EsgiShader basicShader2;
 
-EsgiShader bsplineShader;
+EsgiShader grahanScanShader;
 
 
 OpenGlWindow::OpenGlWindow(Model* model)
@@ -85,17 +85,9 @@ void OpenGlWindow::paintGrid()
 
 void OpenGlWindow::initializeGL()
 {
-	if (model->mode == model->BSPLINE)
+	if (model->mode == model->GRAHAMSCAN)
 	{
 		initializePolygone();
-	}
-	else if (model->mode == model->EXTRUSION)
-	{
-
-	}
-	else if (model->mode == model->BSURFACE)
-	{
-		
 	}
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
@@ -116,9 +108,9 @@ void OpenGlWindow::initializeGL()
 	basicShader2.LoadFragmentShader("basic2.fs");
 	basicShader2.Create();
 
-	bsplineShader.LoadVertexShader("BSpline.vs");
-	bsplineShader.LoadFragmentShader("BSpline.fs");
-	bsplineShader.Create();
+	grahanScanShader.LoadVertexShader("GrahamScan.vs");
+	grahanScanShader.LoadFragmentShader("GrahamScan.fs");
+	grahanScanShader.Create();
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -138,51 +130,35 @@ void OpenGlWindow::newCluster()
 	_points.push_back(std::vector<Point>());
 }
 
-void OpenGlWindow::paintPoints() const
+void OpenGlWindow::paintPoints(std::vector<float> pointsF) const
 {
-	bsplineShader.Bind();
-
-	for (int i = 0; i < _points.size(); i++){
-
-		std::vector<float> pointsF = std::vector<float>();
-		GLuint VAO = GLuint();
-		GLuint VBO = GLuint();
-
-		convertPointToFloat(_points[i], pointsF);
-
-		if (pointsF.size() >= 3){
-			//pointsF.erase(pointsF.begin());
-			glGenVertexArrays(i + 1, &VAO);
-			glGenBuffers(i + 1, &VBO);
-			glBindVertexArray(VAO);
-
-			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			glBufferData(GL_ARRAY_BUFFER, pointsF.size() * sizeof(float), &pointsF.front(), GL_STATIC_DRAW);
-
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-			glEnableVertexAttribArray(0);
-		}
-
-
-		if (pointsF.size() > 0){
-			glBindVertexArray(VAO);
-			glDrawArrays(GL_POINTS, 0, pointsF.size() / 3);
-			glBindVertexArray(0);
-		}
-
-	}
-	bsplineShader.Unbind();
-}
-
-void OpenGlWindow::PaintBaryCenter() const
-{
-	std::vector<float> pointsF = std::vector<float>();
-	pointsF.push_back(_baryCenter.x_);
-	pointsF.push_back(_baryCenter.y_);
-	pointsF.push_back(_baryCenter.z_);
 
 	GLuint VAO = GLuint();
 	GLuint VBO = GLuint();
+
+	if (pointsF.size() >= 3){
+		//pointsF.erase(pointsF.begin());
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glBindVertexArray(VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, pointsF.size() * sizeof(float), &pointsF.front(), GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		// Color attribute
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+	}
+
+
+	if (pointsF.size() > 0){
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_POINTS, 0, pointsF.size() / 6);
+		glBindVertexArray(0);
+	}
+
 }
 
 void OpenGlWindow::paintGL()
@@ -196,37 +172,48 @@ void OpenGlWindow::paintGL()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// Activate shader
-	basicShader.Bind();
+	//basicShader.Bind();
 
-	if (model->mode == model->BSPLINE)
+	if (model->mode == model->GRAHAMSCAN)
 	{
-		paintPoints();
+
+		grahanScanShader.Bind();
+
+		for (int i = 0; i < _points.size(); i++)
+		{
+			std::vector<float> pointsF = std::vector<float>();
+			convertPointToFloat(_points[i], pointsF);
+
+			//pos
+			pointsF.push_back(_baryCenter.x_);
+			pointsF.push_back(_baryCenter.y_);
+			pointsF.push_back(_baryCenter.z_);
+
+			//color
+			pointsF.push_back(0.36f);
+			pointsF.push_back(0.55f);
+			pointsF.push_back(0.81f);
+
+			paintPoints(pointsF);
+
+		}
+		grahanScanShader.Unbind();
 	}
-	//else if (model->mode == model->EXTRUSION)
-	//{
-	//	initializeGrid();
-	//	paintExtrustion();
-	//}
-	//else if (model->mode == model->BSURFACE)
-	//{
-	//	initializeGrid();
-	//	initializeControlPoints();
-	//	paintBSurface();
-	//}
 
 }
 
 
 #pragma region Grahan Scan
 
-void OpenGlWindow::GrahanScan() const
+void OpenGlWindow::GrahamScan()
 {
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
 	Point baryCenter = Point(0.0f, 0.0f, 0.0f);
 	ComputeBaryCenter(outPoints, baryCenter);
 
-	Point _baryCenter = baryCenter;
+	_baryCenter = baryCenter;
+
 
 }
 
@@ -242,7 +229,6 @@ void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& ba
 
 	baryCenter.x_ /= size;
 	baryCenter.y_ /= size;
-
 }
 
 
@@ -256,7 +242,7 @@ double convertViewportToOpenGLCoordinate(double x)
 
 void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 {
-	if (model->mode == model->BSPLINE){
+	if (model->mode == model->GRAHAMSCAN){
 		Point clickP = Point();
 		clickP.x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
 		clickP.y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
@@ -313,6 +299,9 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 		pointsF.push_back(points[i].x_);
 		pointsF.push_back(points[i].y_);
 		pointsF.push_back(points[i].z_);
+		pointsF.push_back(1.0f);
+		pointsF.push_back(0.5f);
+		pointsF.push_back(0.2f);
 	}
 }
 

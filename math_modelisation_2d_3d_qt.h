@@ -20,7 +20,7 @@ private slots:
 	void movePointMode();
 	void repeatPointMode();
 
-	void GrahanScan();
+	void GrahamScan();
 
 private:
 	void createActions();

@@ -43,9 +43,9 @@ void Widget::sliderValueChanged()
 	glWindow->repaint();
 }
 
-void Widget::GrahanScan()
+void Widget::GrahamScan()
 {
-	glWindow->GrahanScan();
+	glWindow->GrahamScan();
 }
 
 void Widget::NewCluster()

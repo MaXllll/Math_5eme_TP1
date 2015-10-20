@@ -6,14 +6,11 @@ struct Model
 	{
 		CREATEPOINT,
 		MOVEPOINT,
-		REPEATPOINT
 	};
 
 	enum Mode
 	{
-		BSPLINE,
-		EXTRUSION,
-		BSURFACE
+		GRAHAMSCAN,
 	};
 
 	bool wireFrame = false;

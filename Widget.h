@@ -21,7 +21,7 @@ private slots:
 public:
 	Widget(Model* model);
 	void NewCluster();
-	void GrahanScan();
+	void GrahamScan();
 	void repaint();
 	void clear();
 };
