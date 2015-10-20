@@ -42,11 +42,19 @@ bool Point::operator == (const Point p) const
 }
 
 
+bool Point::operator<(const Point p) const
+{
+	
+}
+
+
 std::ostream& operator<<(std::ostream& out, const Point &p)
 {
     out<<"("<<p.x_<<","<<p.y_ <<","<<p.z_<<")";
     return out;
 }
+
+
 
 Point::~Point(void)
 {

@@ -12,6 +12,7 @@ public:
 	void newCluster();
 	void clear();
 	void GrahamScan();
+	void Triangulation();
 
 protected:
 	void initializeGL();
