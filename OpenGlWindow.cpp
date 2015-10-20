@@ -202,6 +202,17 @@ void OpenGlWindow::paintGL()
 
 }
 
+#pragma region Triangulation
+
+void OpenGlWindow::Triangulation()
+{
+	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
+
+	std::sort(outPoints.begin(), outPoints.end());
+
+}
+
+#pragma endregion
 
 #pragma region Grahan Scan
 

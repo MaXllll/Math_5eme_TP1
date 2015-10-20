@@ -32,6 +32,7 @@ public:
 	float z_;
 
 	bool operator==(const Point p) const;
+	bool operator<(const Point p) const;
     
 };
 
