@@ -57,6 +57,14 @@ void Math_modelisation_2D_3D_QT::GrahamScan()
 	mainWidget->GrahamScan();
 	mainWidget->repaint();
 }
+
+void Math_modelisation_2D_3D_QT::Triangulation()
+{
+
+	mainWidget->Triangulation();
+	mainWidget->repaint();
+}
+
 void Math_modelisation_2D_3D_QT::createActions()
 {
 	//New Menu
@@ -76,6 +84,10 @@ void Math_modelisation_2D_3D_QT::createActions()
 	grahamScanAct->setStatusTip(tr("Graham-Scan"));
 	connect(grahamScanAct, SIGNAL(triggered()), this, SLOT(GrahamScan()));
 
+	triangulation = new QAction(tr("&Triangulation"), this);
+	triangulation->setStatusTip(tr("Triangulation"));
+	connect(triangulation, SIGNAL(triggered()), this, SLOT(Triangulation()));
+
 }
 
 void Math_modelisation_2D_3D_QT::createMenus()
@@ -87,6 +99,8 @@ void Math_modelisation_2D_3D_QT::createMenus()
 	editMenu = menuBar()->addMenu(tr("&Edit"));
 
 	editMenu->addAction(grahamScanAct);
+	editMenu->addAction(triangulation);
+
 
 	menuBar()->addSeparator();
 

@@ -48,6 +48,12 @@ void Widget::GrahamScan()
 	glWindow->GrahamScan();
 }
 
+
+void Widget::Triangulation()
+{
+	glWindow->Triangulation();
+}
+
 void Widget::NewCluster()
 {
 	glWindow->newCluster();
