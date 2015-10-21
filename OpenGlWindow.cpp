@@ -218,7 +218,7 @@ void OpenGlWindow::Triangulation()
 
 #pragma endregion
 
-#pragma region Grahan Scan
+#pragma region Graham Scan
 
 void OpenGlWindow::GrahamScan()
 {
