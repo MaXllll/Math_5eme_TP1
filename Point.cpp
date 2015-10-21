@@ -42,9 +42,9 @@ bool Point::operator == (const Point p) const
 }
 
 
-bool Point::operator<(const Point p) const
+bool Point::operator < (const Point p) const
 {
-	return false;
+	return this->x_ < p.x_ || (this->x_ == p.x_ && this->y_ < p.y_);
 }
 
 

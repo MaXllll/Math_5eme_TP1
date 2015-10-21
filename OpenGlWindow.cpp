@@ -208,8 +208,12 @@ void OpenGlWindow::Triangulation()
 {
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
+	printVector(outPoints);
+
 	std::sort(outPoints.begin(), outPoints.end());
 
+
+	printVector(outPoints);
 }
 
 #pragma endregion
@@ -316,6 +320,16 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 	}
 }
 
+
+void OpenGlWindow::printVector(const std::vector<Point>& points) const
+{
+	for each (Point p in points)
+	{
+		std::cout << p << " -- ";
+	}
+	std::cout << std::endl;
+}
+
 void OpenGlWindow::clear()
 {
 	_currentCluster = 0;
@@ -324,5 +338,6 @@ void OpenGlWindow::clear()
 
 	_points.push_back(std::vector<Point>());
 }
+
 
 #pragma endregion

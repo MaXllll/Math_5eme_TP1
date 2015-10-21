@@ -22,6 +22,7 @@ public:
 	Widget(Model* model);
 	void NewCluster();
 	void GrahamScan();
+	void Triangulation();
 	void repaint();
 	void clear();
 };

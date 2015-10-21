@@ -21,6 +21,7 @@ private slots:
 	void repeatPointMode();
 
 	void GrahamScan();
+	void Triangulation();
 
 private:
 	void createActions();
@@ -35,6 +36,7 @@ private:
 	QAction *clearAct;
 
 	QAction *grahamScanAct;
+	QAction *triangulation;
 
 private:
 	Ui::Math_modelisation_2D_3D_QTClass ui;
