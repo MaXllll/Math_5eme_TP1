@@ -44,7 +44,7 @@ bool Point::operator == (const Point p) const
 
 bool Point::operator<(const Point p) const
 {
-	
+	return false;
 }
 
 
