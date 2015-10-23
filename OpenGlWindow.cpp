@@ -36,53 +36,6 @@ OpenGlWindow::OpenGlWindow(Model* model)
 }
 
 
-void OpenGlWindow::paintGrid()
-{
-
-	GLuint VBO, VAO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	//glBufferData(GL_ARRAY_BUFFER, verticesGrid.size() * sizeof(float), &verticesGrid.front(), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesGrid.size() * sizeof(float), &indicesGrid.front(), GL_STATIC_DRAW);
-
-	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindVertexArray(0); // Unbind VAO
-
-	basicShader.Bind();
-
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;
-	model = glm::rotate(model, /*(GLfloat)glfwGetTime() **/ 1.f, glm::vec3(1.f, 0.0f, 0.0f));
-	view = glm::translate(view, glm::vec3(-0.5f, 0.8f, -2.0f));
-	projection = glm::perspective(45.0f, (GLfloat)this->width() / (GLfloat)this->height(), 0.1f, 100.0f);
-	// Get their uniform location
-	GLint modelLoc = glGetUniformLocation(basicShader.GetProgram(), "model");
-	GLint viewLoc = glGetUniformLocation(basicShader.GetProgram(), "view");
-	GLint projLoc = glGetUniformLocation(basicShader.GetProgram(), "projection");
-	// Pass them to the shaders
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-	glBindVertexArray(VAO);
-	//glDrawElements(GL_TRIANGLES, indicesGrid.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-
-	basicShader.Unbind();
-}
-
 void OpenGlWindow::initializeGL()
 {
 	if (model->mode == model->GRAHAMSCAN)
@@ -182,7 +135,7 @@ void OpenGlWindow::paintGL()
 		for (int i = 0; i < _points.size(); i++)
 		{
 			std::vector<float> pointsF = std::vector<float>();
-			convertPointToFloat(_points[i], pointsF);
+			convertPointToFloat(_points[i], pointsF, pointColor);
 
 			//pos
 			pointsF.push_back(_baryCenter.x_);
@@ -190,12 +143,12 @@ void OpenGlWindow::paintGL()
 			pointsF.push_back(_baryCenter.z_);
 
 			//color
-			pointsF.push_back(0.36f);
-			pointsF.push_back(0.55f);
-			pointsF.push_back(0.81f);
+			pointsF.push_back(baryCenterColor.x);
+			pointsF.push_back(baryCenterColor.y);
+			pointsF.push_back(baryCenterColor.z);
 
 			paintPoints(pointsF);
-
+			paintGrid();
 		}
 		grahanScanShader.Unbind();
 	}
@@ -206,14 +159,54 @@ void OpenGlWindow::paintGL()
 
 void OpenGlWindow::Triangulation()
 {
-	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
+	vertexGrid = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
-	printVector(outPoints);
+	std::sort(vertexGrid.begin(), vertexGrid.end());
+	
+	indexGrid.push_back(0);
+	indexGrid.push_back(3);
+	indexGrid.push_back(2);
+	indexGrid.push_back(0);
+	indexGrid.push_back(3);
+	indexGrid.push_back(1);
 
-	std::sort(outPoints.begin(), outPoints.end());
+}
 
 
-	printVector(outPoints);
+void OpenGlWindow::paintGrid()
+{
+	if (vertexGrid.size() == 0)
+		return;
+	std::vector<float> vertexF = std::vector<float>();
+
+	convertPointToFloat(vertexGrid, vertexF, lineColor);
+
+	GLuint VBO, VAO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertexF.size() * sizeof(float), &vertexF.front(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexGrid.size() * sizeof(float), &indexGrid.front(), GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0); // Unbind VAOs
+
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indexGrid.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
 }
 
 #pragma endregion
@@ -306,7 +299,7 @@ void OpenGlWindow::searchClosedPoint(const Point click, const std::vector<std::v
 
 }
 
-void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF) const
+void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF, glm::vec3 color) const
 {
 
 	for (int i = 0; i < points.size(); i++)
@@ -314,9 +307,9 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 		pointsF.push_back(points[i].x_);
 		pointsF.push_back(points[i].y_);
 		pointsF.push_back(points[i].z_);
-		pointsF.push_back(1.0f);
-		pointsF.push_back(0.5f);
-		pointsF.push_back(0.2f);
+		pointsF.push_back(color.x);
+		pointsF.push_back(color.y);
+		pointsF.push_back(color.z);
 	}
 }
 
