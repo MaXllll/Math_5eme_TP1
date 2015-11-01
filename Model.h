@@ -13,7 +13,7 @@ struct Model
 		GRAHAMSCAN,
 	};
 
-	bool wireFrame = false;
+	bool wireFrame = true;
 	bool extrusionType = false;
 
 	float degree;
