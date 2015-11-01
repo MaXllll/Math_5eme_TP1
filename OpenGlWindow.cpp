@@ -141,15 +141,50 @@ void OpenGlWindow::paintGL()
 	{
 
 		grahanScanShader.Bind();
-
+		/*
 		for (int i = 0; i < _points.size(); i++)
 		{
 			std::vector<float> pointsF = std::vector<float>();
 			convertPointToFloat(_points[i], pointsF, pointColor);
 
-			paintPoints(pointsF);
+			//paintPoints(pointsF);
+
+			paintLines(pointsF);
 			paintGrid();
+		}*/
+
+		JarvisMarch();
+		
+		bool pointDrawing;
+		/*
+		if (_pointsAA.size() == 0){
+			_pointsAA = _points;
 		}
+		*/
+		
+		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
+			for (int i = 0; i < _points.size(); i++)
+			{
+				std::vector<float> pointsF = std::vector<float>();
+				convertPointToFloat(_points[i], pointsF, pointColor);
+
+				//paintPoints(pointsF);
+
+				paintPoints(pointsF);
+				//paintGrid();
+			}
+		}
+		else{
+			for (int i = 0; i < _pointsAA.size(); i++)
+			{
+				std::vector<float> pointsF = std::vector<float>();
+				convertPointToFloat(_pointsAA[i], pointsF, pointColor);
+				paintPoints(pointsF);
+				//paintLines(pointsF);
+				//paintGrid();
+			}
+		}
+
 		grahanScanShader.Unbind();
 	}
 
@@ -232,7 +267,7 @@ void OpenGlWindow::paintLines(std::vector<float> pointsF) const
 
 	if (pointsF.size() > 0){
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, pointsF.size() / 6);
+		glDrawArrays(GL_LINE_STRIP, 0, pointsF.size() / 6);
 		glBindVertexArray(0);
 	}
 }
@@ -275,6 +310,12 @@ void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& ba
 
 void OpenGlWindow::JarvisMarch()
 {
+	if (_points.size() == 0 || _points[_currentCluster].size() < 3){
+		if (_pointsAA.size() < _points.size()){
+			_pointsAA.push_back(std::vector<Point>());
+		}
+		return;
+	}
 	//std::cout << "Jarvis March" << std::endl;
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
@@ -317,6 +358,10 @@ void OpenGlWindow::JarvisMarch()
 	} while (indexFirst != i);
 	printVector(outPoints);
 	printVector(polyPoints);
+	//if (polyPoints.size() > 2)
+	_pointsAA.insert(_pointsAA.begin() + _currentCluster, polyPoints);
+	//else
+		//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
 }
 
 #pragma endregion
@@ -404,11 +449,15 @@ void OpenGlWindow::printVector(const std::vector<Point>& points) const
 
 void OpenGlWindow::clear()
 {
-	_currentCluster = 0;
+	
+	//_pointsAA[_currentCluster].clear();
 	_points.clear();
+	_pointsAA.clear();
+	_currentCluster = 0;
 	repaint();
 
 	_points.push_back(std::vector<Point>());
+	_pointsAA.push_back(std::vector<Point>());
 }
 
 

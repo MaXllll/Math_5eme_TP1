@@ -30,6 +30,8 @@ private:
 	const glm::vec3 lineColor = glm::vec3(1.0f, 0.5f, 0.3f);
 		
 	std::vector<std::vector<Point>> _points = std::vector<std::vector<Point>>();
+	std::vector<std::vector<Point>> _pointsAA = std::vector<std::vector<Point>>();
+
 	int _currentCluster = -1;
 
 	std::vector<Point> vertexGrid = std::vector<Point>();
