@@ -210,6 +210,36 @@ void OpenGlWindow::paintGrid()
 
 }
 
+void OpenGlWindow::paintLines(std::vector<float> pointsF) const
+{
+	GLuint VAO = GLuint();
+	GLuint VBO = GLuint();
+
+	if (pointsF.size() >= 3){
+		//pointsF.erase(pointsF.begin());
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glBindVertexArray(VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, pointsF.size() * sizeof(float), &pointsF.front(), GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		// Color attribute
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+	}
+
+
+	if (pointsF.size() > 0){
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_POINTS, 0, pointsF.size() / 6);
+		glBindVertexArray(0);
+	}
+}
+
+
 #pragma endregion
 
 #pragma region Graham Scan

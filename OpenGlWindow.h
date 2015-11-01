@@ -50,6 +50,6 @@ private:
 	void convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF, const glm::vec3 color) const;
 	void ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const;
 	void printVector(const std::vector<Point>& points) const;
-
+	void paintLines(std::vector<float> pointsF) const;
 };
 
