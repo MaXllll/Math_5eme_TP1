@@ -86,6 +86,15 @@ void OpenGlWindow::newCluster()
 
 void OpenGlWindow::paintPoints(std::vector<float> pointsF) const
 {
+	//pos
+	pointsF.push_back(_baryCenter.x_);
+	pointsF.push_back(_baryCenter.y_);
+	pointsF.push_back(_baryCenter.z_);
+
+	//color
+	pointsF.push_back(baryCenterColor.x);
+	pointsF.push_back(baryCenterColor.y);
+	pointsF.push_back(baryCenterColor.z);
 
 	GLuint VAO = GLuint();
 	GLuint VBO = GLuint();
@@ -137,16 +146,6 @@ void OpenGlWindow::paintGL()
 		{
 			std::vector<float> pointsF = std::vector<float>();
 			convertPointToFloat(_points[i], pointsF, pointColor);
-
-			//pos
-			pointsF.push_back(_baryCenter.x_);
-			pointsF.push_back(_baryCenter.y_);
-			pointsF.push_back(_baryCenter.z_);
-
-			//color
-			pointsF.push_back(baryCenterColor.x);
-			pointsF.push_back(baryCenterColor.y);
-			pointsF.push_back(baryCenterColor.z);
 
 			paintPoints(pointsF);
 			paintGrid();
@@ -207,7 +206,6 @@ void OpenGlWindow::paintGrid()
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indexGrid.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
-
 }
 
 void OpenGlWindow::paintLines(std::vector<float> pointsF) const
