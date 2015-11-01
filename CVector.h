@@ -37,6 +37,7 @@ public:
     CVector normal() const;
 	float norm() const;
 	float dotProduct(CVector vec) const;
+	float angle(CVector vec) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const CVector &c);

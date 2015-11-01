@@ -48,6 +48,11 @@ void Widget::GrahamScan()
 	glWindow->GrahamScan();
 }
 
+void Widget::JarvisMarch()
+{
+	glWindow->JarvisMarch();
+}
+
 
 void Widget::Triangulation()
 {

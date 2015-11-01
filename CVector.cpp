@@ -74,8 +74,13 @@ float CVector::norm() const{
 
 float CVector::dotProduct(CVector vec) const{
 	return (p2.x_ - p1.x_) * (vec.p2.x_ - vec.p1.x_) + 
-		(p2.x_ - p1.x_) * (vec.p2.y_ - vec.p1.y_) + 
+		(p2.y_ - p1.y_) * (vec.p2.y_ - vec.p1.y_) + 
 		(p2.z_ - p1.z_) * (vec.p2.z_ - vec.p1.z_);
+}
+
+
+float CVector::angle(CVector vec) const{
+	return acos( dotProduct(vec) / (norm() * vec.norm()) );
 }
 
 std::ostream& operator<<(std::ostream& out, const CVector &c)

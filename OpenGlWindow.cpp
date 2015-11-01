@@ -17,6 +17,7 @@
 #include <vector>
 #include "Point.h"
 #include <math.h>
+#include "CVector.h"
 
 //Qt
 #include <QtWidgets\qapplication.h>
@@ -246,6 +247,56 @@ void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& ba
 	baryCenter.y_ /= size;
 }
 
+
+#pragma endregion
+
+#pragma region Jarvis March
+
+void OpenGlWindow::JarvisMarch()
+{
+	//std::cout << "Jarvis March" << std::endl;
+	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
+
+	std::sort(outPoints.begin(), outPoints.end());
+	CVector v = CVector(Point(0,0),Point(0,-1.0f));
+	std::vector<Point> polyPoints = std::vector<Point>();
+
+	int indexFirst = 0;
+	int i = indexFirst;
+	int j;
+	int inew;
+	float angleMin;
+	float distanceMax;
+	float currentAngle;
+	float currNorm;
+	do{
+		polyPoints.push_back(outPoints[i]);
+
+		if (i == 0) j = 1;
+		else j = 0;
+
+		CVector firstVec = CVector(outPoints[i], outPoints[j]);
+		angleMin = v.angle(firstVec);
+		distanceMax = firstVec.norm();
+		inew = j;
+		for (j = inew + 1; j < outPoints.size(); j++){
+			if (j != i){
+				CVector currentVec = CVector(outPoints[i], outPoints[j]);
+				currentAngle = v.angle(currentVec);
+				currNorm = currentVec.norm();
+				if (currentAngle < angleMin || (currentAngle == angleMin && distanceMax < currNorm)){
+					angleMin = currentAngle;
+					distanceMax = currNorm;
+					inew = j;
+				}
+			}
+		}
+		v = CVector(outPoints[i], outPoints[inew]);
+		i = inew;
+	} while (indexFirst != i);
+	printVector(outPoints);
+	printVector(polyPoints);
+}
 
 #pragma endregion
 

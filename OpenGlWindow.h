@@ -13,6 +13,7 @@ public:
 	void clear();
 	void GrahamScan();
 	void Triangulation();
+	void JarvisMarch();
 
 protected:
 	void initializeGL();
@@ -32,8 +33,6 @@ private:
 	void initializePolygone();
 	void paintPoints(std::vector<float> pointsF) const;
 	void PaintBaryCenter() const;
-
-
 	void paintGrid();
 
 	//Utils

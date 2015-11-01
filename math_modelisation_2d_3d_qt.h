@@ -22,6 +22,7 @@ private slots:
 
 	void GrahamScan();
 	void Triangulation();
+	void JarvisMarch();
 
 private:
 	void createActions();
@@ -36,6 +37,7 @@ private:
 	QAction *clearAct;
 
 	QAction *grahamScanAct;
+	QAction *jarvisMarchAct;
 	QAction *triangulation;
 
 private:
