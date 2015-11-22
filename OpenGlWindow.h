@@ -26,6 +26,7 @@ protected:
 private:
 	//Const
 	const glm::vec3 pointColor = glm::vec3(1.0f, 0.5f, 0.3f);
+	const glm::vec3 pointColor2 = glm::vec3(1.0f, 0.0f, 0.0f);
 	const glm::vec3 baryCenterColor = glm::vec3(0.36f, 0.55f, 0.81f);
 	const glm::vec3 lineColor = glm::vec3(1.0f, 0.5f, 0.3f);
 		

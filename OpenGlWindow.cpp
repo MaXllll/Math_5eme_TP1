@@ -162,26 +162,31 @@ void OpenGlWindow::paintGL()
 		}
 		*/
 		
+		// Si la structure de points apres algo est vide, alors on affiche les points cliqués en brut
 		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
 			for (int i = 0; i < _points.size(); i++)
 			{
 				std::vector<float> pointsF = std::vector<float>();
 				convertPointToFloat(_points[i], pointsF, pointColor);
-
-				//paintPoints(pointsF);
-
 				paintPoints(pointsF);
 				//paintGrid();
 			}
 		}
+		// sinon on affiche les points de la structure de points après application de l'algo (jarvis, graham, etc)
 		else{
 			for (int i = 0; i < _pointsAA.size(); i++)
 			{
 				std::vector<float> pointsF = std::vector<float>();
 				convertPointToFloat(_pointsAA[i], pointsF, pointColor);
 				paintPoints(pointsF);
-				//paintLines(pointsF);
-				//paintGrid();
+				paintLines(pointsF);
+			}
+
+			for (int i = 0; i < _points.size(); i++)
+			{
+				std::vector<float> pointsC = std::vector<float>();
+				convertPointToFloat(_points[i], pointsC, pointColor2);
+				paintPoints(pointsC);
 			}
 		}
 
@@ -267,7 +272,10 @@ void OpenGlWindow::paintLines(std::vector<float> pointsF) const
 
 	if (pointsF.size() > 0){
 		glBindVertexArray(VAO);
+
 		glDrawArrays(GL_LINE_STRIP, 0, pointsF.size() / 6);
+		//glDrawArrays(GL_LINES, 0, pointsF.size() / 6);
+
 		glBindVertexArray(0);
 	}
 }
@@ -331,6 +339,7 @@ void OpenGlWindow::JarvisMarch()
 	float distanceMax;
 	float currentAngle;
 	float currNorm;
+
 	do{
 		polyPoints.push_back(outPoints[i]);
 
@@ -339,12 +348,16 @@ void OpenGlWindow::JarvisMarch()
 
 		CVector firstVec = CVector(outPoints[i], outPoints[j]);
 		angleMin = v.angle(firstVec);
+		// si l'angle retourné n'est pas un alpha numérique, c'est parcequ'on a essayé de faire l'angle entre
+		// le vecteur AB et le vecteur BA et donc ca ne va pas --> on remet la valeur min a 3 (valeur assez élevée)
+		if (angleMin == -1 || isnan(angleMin)) { angleMin = 3.0f; };
 		distanceMax = firstVec.norm();
 		inew = j;
 		for (j = inew + 1; j < outPoints.size(); j++){
 			if (j != i){
 				CVector currentVec = CVector(outPoints[i], outPoints[j]);
 				currentAngle = v.angle(currentVec);
+				
 				currNorm = currentVec.norm();
 				if (currentAngle < angleMin || (currentAngle == angleMin && distanceMax < currNorm)){
 					angleMin = currentAngle;
@@ -356,10 +369,21 @@ void OpenGlWindow::JarvisMarch()
 		v = CVector(outPoints[i], outPoints[inew]);
 		i = inew;
 	} while (indexFirst != i);
+
+	std::cout << " Points cliques : " << outPoints.size() << " "  <<std::endl;
 	printVector(outPoints);
+	std::cout << " Points affiches : "  << polyPoints.size() << " " <<std::endl;
+	int size = polyPoints.size();
 	printVector(polyPoints);
+	std::cout << "\n" << std::endl;
 	//if (polyPoints.size() > 2)
+
+	/*std::vector<Point> _pointsCurr = */
+	_pointsAA.at(_currentCluster).clear();
+	//.clear();
 	_pointsAA.insert(_pointsAA.begin() + _currentCluster, polyPoints);
+	_pointsAA[_currentCluster].push_back(polyPoints[0]);
+
 	//else
 		//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
 }
