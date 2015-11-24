@@ -19,6 +19,7 @@ private:
     
 public:
     Point();
+	Point(float x, float y);
     Point(float x, float y, float z);
     Point(const Point &p);
     ~Point(void);
@@ -26,10 +27,16 @@ public:
     void add(const Point &p);
     void scale(float scale);
 	bool isCloseTo(const Point p, float tolerance) const;
+	float angleWith(Point p);
 
 	float x_;
 	float y_;
 	float z_;
+	
+	float x_get() const;
+	void x_set(float x);
+	float y_get() const;
+	void y_set(float y);
 
 	bool operator==(const Point p) const;
 	bool operator<(const Point p) const;

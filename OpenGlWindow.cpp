@@ -17,6 +17,7 @@
 #include <vector>
 #include "Point.h"
 #include <math.h>
+#include "CVector.h"
 
 //Qt
 #include <QtWidgets\qapplication.h>
@@ -140,15 +141,55 @@ void OpenGlWindow::paintGL()
 	{
 
 		grahanScanShader.Bind();
-
+		/*
 		for (int i = 0; i < _points.size(); i++)
 		{
 			std::vector<float> pointsF = std::vector<float>();
 			convertPointToFloat(_points[i], pointsF, pointColor);
 
-			paintPoints(pointsF);
+			//paintPoints(pointsF);
+
+			paintLines(pointsF);
 			paintGrid();
+		}*/
+
+		JarvisMarch();
+		
+		bool pointDrawing;
+		/*
+		if (_pointsAA.size() == 0){
+			_pointsAA = _points;
 		}
+		*/
+		
+		// Si la structure de points apres algo est vide, alors on affiche les points cliqués en brut
+		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
+			for (int i = 0; i < _points.size(); i++)
+			{
+				std::vector<float> pointsF = std::vector<float>();
+				convertPointToFloat(_points[i], pointsF, pointColor);
+				paintPoints(pointsF);
+				//paintGrid();
+			}
+		}
+		// sinon on affiche les points de la structure de points après application de l'algo (jarvis, graham, etc)
+		else{
+			for (int i = 0; i < _pointsAA.size(); i++)
+			{
+				std::vector<float> pointsF = std::vector<float>();
+				convertPointToFloat(_pointsAA[i], pointsF, pointColor);
+				paintPoints(pointsF);
+				paintLines(pointsF);
+			}
+
+			for (int i = 0; i < _points.size(); i++)
+			{
+				std::vector<float> pointsC = std::vector<float>();
+				convertPointToFloat(_points[i], pointsC, pointColor2);
+				paintPoints(pointsC);
+			}
+		}
+
 		grahanScanShader.Unbind();
 	}
 
@@ -207,9 +248,42 @@ void OpenGlWindow::paintGrid()
 	glBindVertexArray(0);
 }
 
+void OpenGlWindow::paintLines(std::vector<float> pointsF) const
+{
+	GLuint VAO = GLuint();
+	GLuint VBO = GLuint();
+
+	if (pointsF.size() >= 3){
+		//pointsF.erase(pointsF.begin());
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glBindVertexArray(VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, pointsF.size() * sizeof(float), &pointsF.front(), GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		// Color attribute
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+	}
+
+
+	if (pointsF.size() > 0){
+		glBindVertexArray(VAO);
+
+		glDrawArrays(GL_LINE_STRIP, 0, pointsF.size() / 6);
+		//glDrawArrays(GL_LINES, 0, pointsF.size() / 6);
+
+		glBindVertexArray(0);
+	}
+}
+
+
 #pragma endregion
 
-#pragma region Grahan Scan
+#pragma region Graham Scan
 
 void OpenGlWindow::GrahamScan()
 {
@@ -237,6 +311,82 @@ void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& ba
 	baryCenter.y_ /= size;
 }
 
+
+#pragma endregion
+
+#pragma region Jarvis March
+
+void OpenGlWindow::JarvisMarch()
+{
+	if (_points.size() == 0 || _points[_currentCluster].size() < 3){
+		if (_pointsAA.size() < _points.size()){
+			_pointsAA.push_back(std::vector<Point>());
+		}
+		return;
+	}
+	//std::cout << "Jarvis March" << std::endl;
+	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
+
+	std::sort(outPoints.begin(), outPoints.end());
+	CVector v = CVector(Point(0,0),Point(0,-1.0f));
+	std::vector<Point> polyPoints = std::vector<Point>();
+
+	int indexFirst = 0;
+	int i = indexFirst;
+	int j;
+	int inew;
+	float angleMin;
+	float distanceMax;
+	float currentAngle;
+	float currNorm;
+
+	do{
+		polyPoints.push_back(outPoints[i]);
+
+		if (i == 0) j = 1;
+		else j = 0;
+
+		CVector firstVec = CVector(outPoints[i], outPoints[j]);
+		angleMin = v.angle(firstVec);
+		// si l'angle retourné n'est pas un alpha numérique, c'est parcequ'on a essayé de faire l'angle entre
+		// le vecteur AB et le vecteur BA et donc ca ne va pas --> on remet la valeur min a 3 (valeur assez élevée)
+		if (angleMin == -1 || isnan(angleMin)) { angleMin = 3.0f; };
+		distanceMax = firstVec.norm();
+		inew = j;
+		for (j = inew + 1; j < outPoints.size(); j++){
+			if (j != i){
+				CVector currentVec = CVector(outPoints[i], outPoints[j]);
+				currentAngle = v.angle(currentVec);
+				
+				currNorm = currentVec.norm();
+				if (currentAngle < angleMin || (currentAngle == angleMin && distanceMax < currNorm)){
+					angleMin = currentAngle;
+					distanceMax = currNorm;
+					inew = j;
+				}
+			}
+		}
+		v = CVector(outPoints[i], outPoints[inew]);
+		i = inew;
+	} while (indexFirst != i);
+
+	std::cout << " Points cliques : " << outPoints.size() << " "  <<std::endl;
+	printVector(outPoints);
+	std::cout << " Points affiches : "  << polyPoints.size() << " " <<std::endl;
+	int size = polyPoints.size();
+	printVector(polyPoints);
+	std::cout << "\n" << std::endl;
+	//if (polyPoints.size() > 2)
+
+	/*std::vector<Point> _pointsCurr = */
+	_pointsAA.at(_currentCluster).clear();
+	//.clear();
+	_pointsAA.insert(_pointsAA.begin() + _currentCluster, polyPoints);
+	_pointsAA[_currentCluster].push_back(polyPoints[0]);
+
+	//else
+		//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
+}
 
 #pragma endregion
 
@@ -323,11 +473,15 @@ void OpenGlWindow::printVector(const std::vector<Point>& points) const
 
 void OpenGlWindow::clear()
 {
-	_currentCluster = 0;
+	
+	//_pointsAA[_currentCluster].clear();
 	_points.clear();
+	_pointsAA.clear();
+	_currentCluster = 0;
 	repaint();
 
 	_points.push_back(std::vector<Point>());
+	_pointsAA.push_back(std::vector<Point>());
 }
 
 

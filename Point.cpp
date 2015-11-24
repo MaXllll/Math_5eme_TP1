@@ -14,6 +14,12 @@ Point::Point()
     this->y_ = 0.0f;
 }
 
+Point::Point(float x, float y)
+{
+	this->x_ = x;
+	this->y_ = y;
+}
+
 Point::Point(float x, float y, float z)
 {
     this->x_ = x;
@@ -26,6 +32,26 @@ Point::Point(const Point &p)
     this->x_ = p.x_;
     this->y_ = p.y_;
 	this->z_ = p.z_;
+}
+
+float Point::x_get() const
+{
+	return this->x_;
+}
+
+void Point::x_set(float x)
+{
+	this->x_ = x;
+}
+
+float Point::y_get() const
+{
+	return this->y_;
+}
+
+void Point::y_set(float y)
+{
+	this->y_ = y;
 }
 
 bool Point::operator == (const Point p) const
@@ -54,6 +80,10 @@ std::ostream& operator<<(std::ostream& out, const Point &p)
     return out;
 }
 
+/*
+float Point::angleWith(Point p){
+	
+}*/
 
 
 Point::~Point(void)

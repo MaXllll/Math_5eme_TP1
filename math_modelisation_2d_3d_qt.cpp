@@ -58,6 +58,12 @@ void Math_modelisation_2D_3D_QT::GrahamScan()
 	mainWidget->repaint();
 }
 
+void Math_modelisation_2D_3D_QT::JarvisMarch()
+{
+	mainWidget->JarvisMarch();
+	mainWidget->repaint();
+}
+
 void Math_modelisation_2D_3D_QT::Triangulation()
 {
 
@@ -80,6 +86,10 @@ void Math_modelisation_2D_3D_QT::createActions()
 	connect(clearAct, SIGNAL(triggered()), this, SLOT(clear()));
 
 	//Edit Menu
+	jarvisMarchAct = new QAction(tr("&JarvisMarch"), this);
+	jarvisMarchAct->setStatusTip(tr("JarvisMarch"));
+	connect(jarvisMarchAct, SIGNAL(triggered()), this, SLOT(JarvisMarch()));
+
 	grahamScanAct = new QAction(tr("&Graham-Scan"), this);
 	grahamScanAct->setStatusTip(tr("Graham-Scan"));
 	connect(grahamScanAct, SIGNAL(triggered()), this, SLOT(GrahamScan()));
@@ -98,6 +108,7 @@ void Math_modelisation_2D_3D_QT::createMenus()
 
 	editMenu = menuBar()->addMenu(tr("&Edit"));
 
+	editMenu->addAction(jarvisMarchAct);
 	editMenu->addAction(grahamScanAct);
 	editMenu->addAction(triangulation);
 

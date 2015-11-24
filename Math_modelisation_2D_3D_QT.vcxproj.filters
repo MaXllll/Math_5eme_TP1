@@ -77,6 +77,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_Widget.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="..\Mathematique pour l%27infographie\CVector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="math_modelisation_2d_3d_qt.h">
@@ -109,6 +112,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Point.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Mathematique pour l%27infographie\CVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

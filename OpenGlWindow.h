@@ -14,6 +14,7 @@ public:
 	void clear();
 	void GrahamScan();
 	void Triangulation();
+	void JarvisMarch();
 
 protected:
 	void initializeGL();
@@ -25,10 +26,13 @@ protected:
 private:
 	//Const
 	const glm::vec3 pointColor = glm::vec3(1.0f, 0.5f, 0.3f);
+	const glm::vec3 pointColor2 = glm::vec3(1.0f, 0.0f, 0.0f);
 	const glm::vec3 baryCenterColor = glm::vec3(0.36f, 0.55f, 0.81f);
 	const glm::vec3 lineColor = glm::vec3(1.0f, 0.5f, 0.3f);
 		
 	std::vector<std::vector<Point>> _points = std::vector<std::vector<Point>>();
+	std::vector<std::vector<Point>> _pointsAA = std::vector<std::vector<Point>>();
+
 	int _currentCluster = -1;
 
 	std::vector<Point> vertexGrid = std::vector<Point>();
@@ -42,8 +46,6 @@ private:
 	void initializePolygone();
 	void paintPoints(std::vector<float> pointsF) const;
 	void PaintBaryCenter() const;
-
-
 	void paintGrid();
 
 	//Utils
@@ -51,6 +53,6 @@ private:
 	void convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF, const glm::vec3 color) const;
 	void ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const;
 	void printVector(const std::vector<Point>& points) const;
-
+	void paintLines(std::vector<float> pointsF) const;
 };
 
