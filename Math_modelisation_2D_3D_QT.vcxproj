@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="customSlider.cpp" />
+    <ClCompile Include="CVector.cpp" />
     <ClCompile Include="EsgiShader.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_customSlider.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -226,6 +227,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CVector.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="OpenGlWindow.h" />
     <ClInclude Include="Point.h" />
