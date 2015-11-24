@@ -293,8 +293,34 @@ void OpenGlWindow::GrahamScan()
 	ComputeBaryCenter(outPoints, baryCenter);
 
 	_baryCenter = baryCenter;
+	int i = 0;
 
+	// fonction de tri des points par ordre d'angle en utilisant une lambda
+	std::sort(outPoints.begin(), outPoints.end(),
+		[&baryCenter](const Point & a, const Point & b) -> bool
+	{
+		// vector BPj 
+		CVector currentVec1 = CVector(baryCenter, a);
+		// vector BPj+1
+		CVector currentVec2 = CVector(baryCenter, b);
+		// vector Ox
+		CVector v = CVector(Point(0, 0), Point(1.0f,0));
+		// Easier to debug like this
+		float angle1 = v.angle(currentVec1);
+		float angle2 = v.angle(currentVec2);
+		// We check if we must take the inner or outer angle between the two vectors
+		if (v.crossProduct(currentVec1)<0){
+			angle1 = 2 * PI - angle1;
+		} 
+		if (v.crossProduct(currentVec2) < 0){
+			angle2 = 2 * PI - angle2;
+		}
+		//return v.angle(currentVec1) > v.angle(currentVec2);
+		return angle1 < angle2;
+	});
 
+	std::cout << " Points triés par angle : " << outPoints.size() << " " << std::endl;
+	printVector(outPoints);
 }
 
 void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const

@@ -78,6 +78,12 @@ float CVector::dotProduct(CVector vec) const{
 		(p2.z_ - p1.z_) * (vec.p2.z_ - vec.p1.z_);
 }
 
+// Actually it calculates the magnitude between the two vectors in 2D
+float CVector::crossProduct(CVector v2) const
+{
+	return (p2.x_ - p1.x_) * (v2.p2.y_-v2.p1.y_) - (p2.y_-p1.y_)* (v2.p2.x_-v2.p1.x_);
+}
+
 
 float CVector::angle(CVector vec) const{
 	return acos( dotProduct(vec) / (norm() * vec.norm()) );
