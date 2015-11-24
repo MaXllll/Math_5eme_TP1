@@ -205,12 +205,17 @@ void OpenGlWindow::Triangulation()
 
 	std::sort(vertexGrid.begin(), vertexGrid.end());
 	
+	//Base 2-triangulation
 	indexGrid.push_back(0);
-	indexGrid.push_back(3);
-	indexGrid.push_back(2);
-	indexGrid.push_back(0);
-	indexGrid.push_back(3);
 	indexGrid.push_back(1);
+	indexGrid.push_back(2);
+
+	indexGrid.push_back(0);
+	indexGrid.push_back(2);
+	indexGrid.push_back(3);
+
+
+
 }
 
 
