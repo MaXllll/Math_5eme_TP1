@@ -66,7 +66,7 @@ void Math_modelisation_2D_3D_QT::JarvisMarch()
 
 void Math_modelisation_2D_3D_QT::Triangulation()
 {
-
+	model.mode = model.TRIANGULATION,
 	mainWidget->Triangulation();
 	mainWidget->repaint();
 }

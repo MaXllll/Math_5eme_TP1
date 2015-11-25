@@ -141,17 +141,6 @@ void OpenGlWindow::paintGL()
 	{
 
 		grahanScanShader.Bind();
-		/*
-		for (int i = 0; i < _points.size(); i++)
-		{
-			std::vector<float> pointsF = std::vector<float>();
-			convertPointToFloat(_points[i], pointsF, pointColor);
-
-			//paintPoints(pointsF);
-
-			paintLines(pointsF);
-			paintGrid();
-		}*/
 
 		JarvisMarch();
 		
@@ -169,7 +158,6 @@ void OpenGlWindow::paintGL()
 				std::vector<float> pointsF = std::vector<float>();
 				convertPointToFloat(_points[i], pointsF, pointColor);
 				paintPoints(pointsF);
-				//paintGrid();
 			}
 		}
 		// sinon on affiche les points de la structure de points après application de l'algo (jarvis, graham, etc)
@@ -192,6 +180,20 @@ void OpenGlWindow::paintGL()
 
 		grahanScanShader.Unbind();
 	}
+	else if (model->mode == model->TRIANGULATION)
+	{
+
+		for (int i = 0; i < _points.size(); i++)
+		{
+			std::vector<float> pointsF = std::vector<float>();
+			convertPointToFloat(_points[i], pointsF, pointColor);
+
+			//paintPoints(pointsF);
+
+			//paintLines(pointsF);
+			paintGrid();
+		}
+	}
 
 }
 
@@ -203,12 +205,16 @@ void OpenGlWindow::Triangulation()
 
 	std::sort(vertexGrid.begin(), vertexGrid.end());
 	
+	//Base 2-triangulation
 	indexGrid.push_back(0);
-	indexGrid.push_back(3);
-	indexGrid.push_back(2);
-	indexGrid.push_back(0);
-	indexGrid.push_back(3);
 	indexGrid.push_back(1);
+	indexGrid.push_back(2);
+
+	indexGrid.push_back(0);
+	indexGrid.push_back(2);
+	indexGrid.push_back(3);
+
+
 
 }
 

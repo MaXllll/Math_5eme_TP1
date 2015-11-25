@@ -11,6 +11,7 @@ struct Model
 	enum Mode
 	{
 		GRAHAMSCAN,
+		TRIANGULATION,
 	};
 
 	bool wireFrame = true;
