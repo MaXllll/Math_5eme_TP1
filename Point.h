@@ -39,7 +39,10 @@ public:
 	void y_set(float y);
 
 	bool operator==(const Point p) const;
+	bool operator!=(const Point p) const;
 	bool operator<(const Point p) const;
+
+
     
 };
 

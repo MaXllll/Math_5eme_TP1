@@ -67,6 +67,10 @@ bool Point::operator == (const Point p) const
 		return false;
 }
 
+bool Point::operator!=(const Point p) const
+{
+	return !(*this == p);
+}
 
 bool Point::operator < (const Point p) const
 {

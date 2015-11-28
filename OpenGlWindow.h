@@ -3,6 +3,7 @@
 #include "Model.h"
 #include "Point.h"
 #include <glm\vec3.hpp>
+#include "CVector.h"
 
 class OpenGlWindow : public QOpenGLWidget
 {
@@ -56,6 +57,6 @@ private:
 	void printVector(const std::vector<Point>& points) const;
 	void paintLines(std::vector<float>& pointsF) const;
 	void AddBaryCenter(std::vector<float>& pointsF) const;
-
+	bool isConvex(CVector& v, CVector& v2) const;
 };
 
