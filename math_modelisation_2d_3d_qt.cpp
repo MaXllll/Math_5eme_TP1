@@ -2,6 +2,7 @@
 #include <qboxlayout.h>
 #include "Widget.h"
 #include <qdebug.h>
+#include "OpenGlWindow.h"
 
 Widget* mainWidget;
 Model model;
@@ -54,12 +55,16 @@ void Math_modelisation_2D_3D_QT::repeatPointMode()
 
 void Math_modelisation_2D_3D_QT::GrahamScan()
 {
+	mainWidget->getGLWindow()->clearCurrentPointAA();
+	model.mode = model.GRAHAMSCAN,
 	mainWidget->GrahamScan();
 	mainWidget->repaint();
 }
 
 void Math_modelisation_2D_3D_QT::JarvisMarch()
 {
+	mainWidget->getGLWindow()->clearCurrentPointAA();
+	model.mode = model.JARVIS,
 	mainWidget->JarvisMarch();
 	mainWidget->repaint();
 }

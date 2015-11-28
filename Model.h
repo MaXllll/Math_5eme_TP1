@@ -10,6 +10,7 @@ struct Model
 
 	enum Mode
 	{
+		JARVIS,
 		GRAHAMSCAN,
 		TRIANGULATION,
 	};

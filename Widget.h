@@ -2,6 +2,7 @@
 #include <QtWidgets\qwidget.h>
 #include "Model.h"
 
+class OpenGlWindow;
 
 class Widget : public QWidget
 {
@@ -26,5 +27,6 @@ public:
 	void Triangulation();
 	void repaint();
 	void clear();
+	OpenGlWindow* getGLWindow();
 };
 

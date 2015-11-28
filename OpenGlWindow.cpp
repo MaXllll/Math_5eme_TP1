@@ -84,18 +84,8 @@ void OpenGlWindow::newCluster()
 	_points.push_back(std::vector<Point>());
 }
 
-void OpenGlWindow::paintPoints(std::vector<float> pointsF) const
+void OpenGlWindow::paintPoints(std::vector<float>& pointsF) const
 {
-	//pos
-	pointsF.push_back(_baryCenter.x_);
-	pointsF.push_back(_baryCenter.y_);
-	pointsF.push_back(_baryCenter.z_);
-
-	//color
-	pointsF.push_back(baryCenterColor.x);
-	pointsF.push_back(baryCenterColor.y);
-	pointsF.push_back(baryCenterColor.z);
-
 	GLuint VAO = GLuint();
 	GLuint VBO = GLuint();
 
@@ -137,25 +127,27 @@ void OpenGlWindow::paintGL()
 	// Activate shader
 	//basicShader.Bind();
 
-	if (model->mode == model->GRAHAMSCAN)
+
+	std::vector<float> pointsF = std::vector<float>();
+	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS)
 	{
 
 		grahanScanShader.Bind();
 
-		JarvisMarch();
+		if (model->mode == model->GRAHAMSCAN){
+			GrahamScan();
+			AddBaryCenter(pointsF);
+		}
+		else{
+			JarvisMarch();
+		}
 		
 		bool pointDrawing;
-		/*
-		if (_pointsAA.size() == 0){
-			_pointsAA = _points;
-		}
-		*/
 		
 		// Si la structure de points apres algo est vide, alors on affiche les points cliqués en brut
 		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
 			for (int i = 0; i < _points.size(); i++)
 			{
-				std::vector<float> pointsF = std::vector<float>();
 				convertPointToFloat(_points[i], pointsF, pointColor);
 				paintPoints(pointsF);
 			}
@@ -164,7 +156,6 @@ void OpenGlWindow::paintGL()
 		else{
 			for (int i = 0; i < _pointsAA.size(); i++)
 			{
-				std::vector<float> pointsF = std::vector<float>();
 				convertPointToFloat(_pointsAA[i], pointsF, pointColor);
 				paintPoints(pointsF);
 				paintLines(pointsF);
@@ -177,7 +168,6 @@ void OpenGlWindow::paintGL()
 				paintPoints(pointsC);
 			}
 		}
-
 		grahanScanShader.Unbind();
 	}
 	else if (model->mode == model->TRIANGULATION)
@@ -185,7 +175,6 @@ void OpenGlWindow::paintGL()
 
 		for (int i = 0; i < _points.size(); i++)
 		{
-			std::vector<float> pointsF = std::vector<float>();
 			convertPointToFloat(_points[i], pointsF, pointColor);
 
 			//paintPoints(pointsF);
@@ -214,10 +203,11 @@ void OpenGlWindow::Triangulation()
 	indexGrid.push_back(2);
 	indexGrid.push_back(3);
 
-
-
 }
 
+void OpenGlWindow::clearCurrentPointAA(){
+	_pointsAA[_currentCluster] = std::vector<Point>();
+}
 
 void OpenGlWindow::paintGrid()
 {
@@ -254,7 +244,7 @@ void OpenGlWindow::paintGrid()
 	glBindVertexArray(0);
 }
 
-void OpenGlWindow::paintLines(std::vector<float> pointsF) const
+void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 {
 	GLuint VAO = GLuint();
 	GLuint VBO = GLuint();
@@ -293,32 +283,78 @@ void OpenGlWindow::paintLines(std::vector<float> pointsF) const
 
 void OpenGlWindow::GrahamScan()
 {
+	if (_points.size() == 0 || _points[_currentCluster].size() < 2){
+		if (_pointsAA.size() < _points.size()){
+			_pointsAA.push_back(std::vector<Point>());
+		}
+		return;
+	}
+
+
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
 	Point baryCenter = Point(0.0f, 0.0f, 0.0f);
 	ComputeBaryCenter(outPoints, baryCenter);
 
 	_baryCenter = baryCenter;
+	int i = 0;
 
-
-}
-
-void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
-{
-	int size = points.size();
-
-	for (size_t i = 0; i < size; i++)
+	// fonction de tri des points par ordre d'angle en utilisant une lambda
+	std::sort(outPoints.begin(), outPoints.end(),
+		[&baryCenter](const Point & a, const Point & b) -> bool
 	{
-		baryCenter.x_ += points[i].x_;
-		baryCenter.y_ += points[i].y_;
-	}
+		// vector BPj 
+		CVector currentVec1 = CVector(baryCenter, a);
+		// vector BPj+1
+		CVector currentVec2 = CVector(baryCenter, b);
+		// vector Ox
+		CVector v = CVector(Point(0, 0), Point(1.0f,0));
+		// Easier to debug like this
+		float angle1 = v.angle(currentVec1);
+		float angle2 = v.angle(currentVec2);
+		// We check if we must take the inner or outer angle between the two vectors
+		if (v.crossProduct(currentVec1)<0){
+			angle1 = 2 * PI - angle1;
+		} 
+		if (v.crossProduct(currentVec2) < 0){
+			angle2 = 2 * PI - angle2;
+		}
+		//return v.angle(currentVec1) > v.angle(currentVec2);
+		return angle1 < angle2;
+	});
 
-	baryCenter.x_ /= size;
-	baryCenter.y_ /= size;
+	std::cout << " Points triés par angle : " << outPoints.size() << " " << std::endl;
+	printVector(outPoints);
 }
+
+	void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
+	{
+		int size = points.size();
+
+		for (size_t i = 0; i < size; i++)
+		{
+			baryCenter.x_ += points[i].x_;
+			baryCenter.y_ += points[i].y_;
+		}
+
+		baryCenter.x_ /= size;
+		baryCenter.y_ /= size;
+	}
 
 
 #pragma endregion
+void OpenGlWindow::AddBaryCenter(std::vector<float>& pointsF) const
+{
+	//pos
+	pointsF.push_back(_baryCenter.x_);
+	pointsF.push_back(_baryCenter.y_);
+	pointsF.push_back(_baryCenter.z_);
+
+	//color
+	pointsF.push_back(baryCenterColor.x);
+	pointsF.push_back(baryCenterColor.y);
+	pointsF.push_back(baryCenterColor.z);
+}
 
 #pragma region Jarvis March
 
@@ -404,7 +440,7 @@ double convertViewportToOpenGLCoordinate(double x)
 
 void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 {
-	if (model->mode == model->GRAHAMSCAN){
+	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS){
 		Point clickP = Point();
 		clickP.x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
 		clickP.y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());

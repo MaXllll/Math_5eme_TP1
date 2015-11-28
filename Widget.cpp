@@ -3,7 +3,6 @@
 #include <QtWidgets\qslider.h>
 #include <QtCore\qdebug.h>
 #include "OpenGlWindow.h"
-
 OpenGlWindow* glWindow;
 
 // Window dimensions
@@ -35,6 +34,10 @@ Widget::Widget(Model* modelP)
 	//connect(dSlider, SIGNAL(valueChanged(float)), this, SLOT(sliderValueChanged()));
 }
 
+
+OpenGlWindow* Widget::getGLWindow(){
+	return glWindow;
+}
 
 void Widget::sliderValueChanged()
 {
