@@ -1,15 +1,16 @@
 #pragma once
-#include "Triangle.h"
-#include "Vertex.h"
+
+class Vertex;
+class Triangle;
 class Edge
 {
 
 public:
-	Vertex _v1;
-	Vertex _v2;
+	Vertex* _v1;
+	Vertex* _v2;
 
-	Triangle _t1;
-	Triangle _t2;
+	Triangle* _t1;
+	Triangle* _t2;
 
 
 	Edge();

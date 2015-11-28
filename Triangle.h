@@ -1,11 +1,12 @@
 #pragma once
-#include "Edge.h"
+
+class Edge;
 class Triangle
 {
 public:
-	Edge _e1;
-	Edge _e2;
-	Edge _e3;
+	Edge* _e1;
+	Edge* _e2;
+	Edge* _e3;
 
 
 	Triangle();

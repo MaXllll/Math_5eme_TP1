@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="customSlider.cpp" />
     <ClCompile Include="CVector.cpp" />
+    <ClCompile Include="Edge.cpp" />
     <ClCompile Include="EsgiShader.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_customSlider.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -184,6 +185,8 @@
     <ClCompile Include="math_modelisation_2d_3d_qt.cpp" />
     <ClCompile Include="OpenGlWindow.cpp" />
     <ClCompile Include="Point.cpp" />
+    <ClCompile Include="Triangle.cpp" />
+    <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="Widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -228,9 +231,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CVector.h" />
+    <ClInclude Include="Edge.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="OpenGlWindow.h" />
     <ClInclude Include="Point.h" />
+    <ClInclude Include="Triangle.h" />
+    <ClInclude Include="Vertex.h" />
     <CustomBuild Include="Widget.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing Widget.h...</Message>
