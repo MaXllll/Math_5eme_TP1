@@ -31,10 +31,10 @@ Triangle::~Triangle()
 	//delete _e3;
 }
 
-Triangle& Triangle::operator = (const Triangle& t)
-{
-	_e1 = Edge(t._e1);
-	_e2 = Edge(t._e2);
-	_e3 = Edge(t._e3);
-	return *this;
-}
+//Triangle& Triangle::operator = (const Triangle& t)
+//{
+//	_e1 = Edge(t._e1);
+//	_e2 = Edge(t._e2);
+//	_e3 = Edge(t._e3);
+//	return *this;
+//}

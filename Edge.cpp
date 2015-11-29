@@ -42,11 +42,7 @@ Edge::~Edge()
 	//delete _t2;
 }
 
-Edge& Edge::operator = (const Edge& v)
+bool Edge::operator==(const Edge& e) const
 {
-	_v1 = Vertex(v._v1);
-	_v2 = Vertex(v._v2);
-	//_t1 = new Triangle(*v._t1);
-	//_t2 = new Triangle(*v._t2);
-	return *this;
+	return (e._v1 == this->_v1 && e._v2 == this->_v2) || (e._v1 == this->_v2 && e._v2 == this->_v1);
 }

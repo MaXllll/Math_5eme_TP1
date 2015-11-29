@@ -18,6 +18,7 @@
 #include "Point.h"
 #include <math.h>
 #include "CVector.h"
+#include <functional>
 
 //Qt
 #include <QtWidgets\qapplication.h>
@@ -141,9 +142,9 @@ void OpenGlWindow::paintGL()
 		else{
 			JarvisMarch();
 		}
-		
+
 		bool pointDrawing;
-		
+
 		// Si la structure de points apres algo est vide, alors on affiche les points cliqués en brut
 		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
 			for (int i = 0; i < _points.size(); i++)
@@ -175,6 +176,7 @@ void OpenGlWindow::paintGL()
 
 		for (int i = 0; i < _points.size(); i++)
 		{
+			Triangulation();
 			convertPointToFloat(_points[i], pointsF, pointColor);
 
 			//paintPoints(pointsF);
@@ -190,6 +192,13 @@ void OpenGlWindow::paintGL()
 
 void OpenGlWindow::Triangulation()
 {
+	_triangles.clear();
+	_edges.clear();
+	_vertex.clear();
+	indexGrid.clear();
+	_edgesExt.clear();
+	pointIndex = 0;
+
 	if (_points[_currentCluster].size() < 3)
 		return;
 
@@ -199,39 +208,59 @@ void OpenGlWindow::Triangulation()
 
 	Vertex v1 = Vertex(vertexGrid[0]);
 	Vertex v2 = Vertex(vertexGrid[1]);
-	v1._index = 0;
-	v2._index = 1;
+	v1._index = pointIndex++;
+	v2._index = pointIndex++;
 
-	AddTriangle(v1, v2, vertexGrid[2], 2);
+	AddTriangle(v1, v2, vertexGrid[2], pointIndex++);
+
+	_edgesExt.insert(_edgesExt.begin(), _edges.begin(), _edges.end());
 
 	if (vertexGrid.size() < 4)
 		return;
+
+	std::vector <std::function<void()>> jobs;
 
 	for (int i = 3; i < vertexGrid.size(); i++)
 	{
 		Point newPoint = vertexGrid[i];
 
-		int j = 0;
-		for each (auto edge in _edges)
+		for (int j = 0; j < _edgesExt.size(); j++)
 		{
+			auto edge = _edgesExt[j];
 			//We need to choose an point that doesn't belong to the current edge 
 			Point interiorP = interiorPoint(j);
 			CVector normalI = interiorNormal(edge, interiorP);
 			CVector newEdge = CVector(edge._v1._coords, newPoint);
 
-			int dotResult = normalI.dotProduct(newEdge);	
+			float dotResult = normalI.dotProductMag(newEdge);
 			bool visible = dotResult < 0;
 
+			if (visible)
+			{
+				std::function<void()> fct = std::bind(&OpenGlWindow::AddTriangle, this, edge._v1, edge._v2, newPoint, pointIndex);
+				jobs.push_back(fct);
 
-			j++;
+				//AddTriangle(edge._v1, edge._v2, newPoint, pointIndex++);
+			}
 		}
+
+		for each(auto fct in jobs)
+		{
+			fct();
+		}
+
+		pointIndex++;
+		jobs.clear();
 	}
+
 
 }
 
 void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex)
 {
 	Vertex v3 = Vertex(p);
+	v3._index = newIndex;
+
 
 	Edge e1 = Edge(v1, v2);
 	Edge e2 = Edge(v2, v3);
@@ -252,13 +281,31 @@ void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex)
 	indexGrid.push_back(v1._index);
 	indexGrid.push_back(v2._index);
 	indexGrid.push_back(newIndex);
+
+	if (newIndex != 2)
+	{
+		_edgesExt.erase(std::remove(_edgesExt.begin(), _edgesExt.end(), e1), _edgesExt.end());
+
+		if (std::find(_edgesExt.begin(), _edgesExt.end(), e2) == _edgesExt.end())
+			_edgesExt.push_back(e2);
+		else
+			_edgesExt.erase(std::remove(_edgesExt.begin(), _edgesExt.end(), e2), _edgesExt.end());
+
+		if (std::find(_edgesExt.begin(), _edgesExt.end(), e3) == _edgesExt.end())
+			_edgesExt.push_back(e3);
+		else
+			_edgesExt.erase(std::remove(_edgesExt.begin(), _edgesExt.end(), e3), _edgesExt.end());
+
+		_edges.push_back(e2);
+		_edges.push_back(e3);
+	}
 }
 
 Point OpenGlWindow::interiorPoint(int currentIndex) const
 {
 	if (currentIndex == 0)
 		return _edges[1]._v2._coords;
-	else if (currentIndex == _edges.size())
+	else if (currentIndex == _edges.size() - 1)
 		return _edges[0]._v2._coords;
 	else
 		return _edges[0]._v1._coords;
@@ -268,23 +315,23 @@ CVector OpenGlWindow::interiorNormal(const Edge& edge, const Point& point)  cons
 {
 	Point p1 = edge._v1._coords;
 	Point p2 = edge._v2._coords;
-	
+
 	float dX = p2.x_ - p1.x_;
 	float dY = p2.y_ - p1.y_;
 
 	//We chosse one normal
-	CVector normal = CVector(p1, Point(p1.x_ - dX, p1.y_ + dY));
+	CVector normal = CVector(-dY, dX);
 
 	//We construct a vector using one point of the edge and another poitn from de structure
 	CVector intVec = CVector(p1, point);
 
 	//Is the normal the interior one?
-	float result = normal.dotProduct(intVec);
+	float result = normal.dotProductMag(intVec);
 
 	if (result > 0)
 		return normal;
 	else
-		return CVector(p1, Point(p1.x_ + dX, p1.y_ - dY));
+		return CVector(dY, -dX);
 }
 
 void OpenGlWindow::clearCurrentPointAA(){
@@ -390,14 +437,14 @@ void OpenGlWindow::GrahamScan()
 		// vector BPj+1
 		CVector currentVec2 = CVector(baryCenter, b);
 		// vector Ox
-		CVector v = CVector(Point(0, 0), Point(1.0f,0));
+		CVector v = CVector(Point(0, 0), Point(1.0f, 0));
 		// Easier to debug like this
 		float angle1 = v.angle(currentVec1);
 		float angle2 = v.angle(currentVec2);
 		// We check if we must take the inner or outer angle between the two vectors
-		if (v.crossProduct(currentVec1)<0){
+		if (v.crossProduct(currentVec1) < 0){
 			angle1 = 2 * PI - angle1;
-		} 
+		}
 		if (v.crossProduct(currentVec2) < 0){
 			angle2 = 2 * PI - angle2;
 		}
@@ -409,19 +456,19 @@ void OpenGlWindow::GrahamScan()
 	printVector(outPoints);
 }
 
-	void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
+void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
+{
+	int size = points.size();
+
+	for (size_t i = 0; i < size; i++)
 	{
-		int size = points.size();
-
-		for (size_t i = 0; i < size; i++)
-		{
-			baryCenter.x_ += points[i].x_;
-			baryCenter.y_ += points[i].y_;
-		}
-
-		baryCenter.x_ /= size;
-		baryCenter.y_ /= size;
+		baryCenter.x_ += points[i].x_;
+		baryCenter.y_ += points[i].y_;
 	}
+
+	baryCenter.x_ /= size;
+	baryCenter.y_ /= size;
+}
 
 
 #pragma endregion
@@ -452,7 +499,7 @@ void OpenGlWindow::JarvisMarch()
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
 	std::sort(outPoints.begin(), outPoints.end());
-	CVector v = CVector(Point(0,0),Point(0,-1.0f));
+	CVector v = CVector(Point(0, 0), Point(0, -1.0f));
 	std::vector<Point> polyPoints = std::vector<Point>();
 
 	int indexFirst = 0;
@@ -481,7 +528,7 @@ void OpenGlWindow::JarvisMarch()
 			if (j != i){
 				CVector currentVec = CVector(outPoints[i], outPoints[j]);
 				currentAngle = v.angle(currentVec);
-				
+
 				currNorm = currentVec.norm();
 				if (currentAngle < angleMin || (currentAngle == angleMin && distanceMax < currNorm)){
 					angleMin = currentAngle;
@@ -494,9 +541,9 @@ void OpenGlWindow::JarvisMarch()
 		i = inew;
 	} while (indexFirst != i);
 
-	std::cout << " Points cliques : " << outPoints.size() << " "  <<std::endl;
+	std::cout << " Points cliques : " << outPoints.size() << " " << std::endl;
 	printVector(outPoints);
-	std::cout << " Points affiches : "  << polyPoints.size() << " " <<std::endl;
+	std::cout << " Points affiches : " << polyPoints.size() << " " << std::endl;
 	int size = polyPoints.size();
 	printVector(polyPoints);
 	std::cout << "\n" << std::endl;
@@ -509,7 +556,7 @@ void OpenGlWindow::JarvisMarch()
 	_pointsAA[_currentCluster].push_back(polyPoints[0]);
 
 	//else
-		//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
+	//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
 }
 
 #pragma endregion
@@ -522,7 +569,7 @@ double convertViewportToOpenGLCoordinate(double x)
 
 void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 {
-	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS){
+	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS || model->mode == model->TRIANGULATION){
 		Point clickP = Point();
 		clickP.x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
 		clickP.y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
@@ -597,7 +644,7 @@ void OpenGlWindow::printVector(const std::vector<Point>& points) const
 
 void OpenGlWindow::clear()
 {
-	
+
 	//_pointsAA[_currentCluster].clear();
 	_points.clear();
 	_pointsAA.clear();

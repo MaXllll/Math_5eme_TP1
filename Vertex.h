@@ -16,6 +16,8 @@ public:
 	//Vertex(const Point coords, const Edge edge);
 	~Vertex();
 
-	Vertex& operator=(const Vertex& v);
+	//Vertex& operator=(const Vertex& v);
+
+	bool operator==(const Vertex& e) const;
 };
 

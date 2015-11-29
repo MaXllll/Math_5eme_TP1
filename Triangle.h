@@ -14,6 +14,6 @@ public:
 	Triangle(const Edge e1, const Edge e2, const Edge e3);
 	~Triangle();
 
-	Triangle& Triangle::operator = (const Triangle& v);
+	//Triangle& Triangle::operator = (const Triangle& v);
 };
 

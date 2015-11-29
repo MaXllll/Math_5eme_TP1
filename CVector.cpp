@@ -6,6 +6,8 @@
 //  Copyright (c) 2015 Maxime Lahaye. All rights reserved.
 //
 #include "CVector.h"
+#include <numeric>
+#include <vector>
 
 CVector::CVector()
 {
@@ -17,12 +19,22 @@ CVector::CVector(const Point &p1, const Point &p2)
 {
     this->p1 = p1;
     this->p2 = p2;
+	this->x = p2.x_ - p1.x_;
+	this->y = p2.y_ - p1.y_;
+}
+
+CVector::CVector(float x, float y)
+{
+	this->x = x;
+	this->y = y;
 }
 
 CVector::CVector(const CVector &c)
 {
     this->p1 = c.p1;
     this->p2  = c.p2;
+	this->x = c.x;
+	this->y = c.y;
 }
 
 CVector::~CVector(void)
@@ -76,8 +88,22 @@ float CVector::dotProduct(CVector vec) const{
 	return (p2.x_ - p1.x_) * (vec.p2.x_ - vec.p1.x_) + 
 		(p2.y_ - p1.y_) * (vec.p2.y_ - vec.p1.y_) + 
 		(p2.z_ - p1.z_) * (vec.p2.z_ - vec.p1.z_);
+
+
 }
 
+float CVector::dotProductMag(CVector vec) const
+{
+	std::vector<float> v1 = std::vector<float>();
+	v1.push_back(this->x);
+	v1.push_back(this->y);
+
+	std::vector<float> v2 = std::vector<float>();
+	v2.push_back(vec.x);
+	v2.push_back(vec.y);
+
+	return std::inner_product(begin(v1), end(v1), begin(v2), 0.0);
+}
 // Actually it calculates the magnitude between the two vectors in 2D
 float CVector::crossProduct(CVector v2) const
 {

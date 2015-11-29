@@ -38,9 +38,14 @@ Vertex::~Vertex()
 	//delete _edge;
 }
 
-Vertex& Vertex::operator = (const Vertex& v)
+//Vertex& Vertex::operator = (const Vertex& v)
+//{
+//	//_edge = new Edge(*v._edge);
+//	_coords = Point(v._coords);
+//	return *this;
+//}
+
+bool Vertex::operator==(const Vertex& e) const
 {
-	//_edge = new Edge(*v._edge);
-	_coords = Point(v._coords);
-	return *this;
+	return e._coords == this->_coords;
 }
