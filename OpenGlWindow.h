@@ -2,6 +2,10 @@
 #include <QtGui\qevent.h>
 #include "Model.h"
 #include "Point.h"
+#include "Edge.h"
+#include "Triangle.h"
+#include "Vertex.h"
+#include "CVector.h"
 #include <glm\vec3.hpp>
 
 class OpenGlWindow : public QOpenGLWidget
@@ -43,6 +47,17 @@ private:
 	bool _hasClick = false;
 	Point _baryCenter;
 
+
+	//Triangulation
+	std::vector<Vertex> _vertex = std::vector<Vertex>();
+	std::vector<Edge> _edges = std::vector<Edge>();
+	std::vector<Triangle> _triangles = std::vector<Triangle>();
+
+	void AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex);
+	Point interiorPoint(int currentIndex) const;
+	CVector interiorNormal(const Edge& edge, const Point& point) const;
+
+
 	//Points
 	void initializePolygone();
 	void paintPoints(std::vector<float>& pointsF) const;
@@ -56,6 +71,7 @@ private:
 	void printVector(const std::vector<Point>& points) const;
 	void paintLines(std::vector<float>& pointsF) const;
 	void AddBaryCenter(std::vector<float>& pointsF) const;
+
 
 };
 

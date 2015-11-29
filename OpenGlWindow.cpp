@@ -190,19 +190,101 @@ void OpenGlWindow::paintGL()
 
 void OpenGlWindow::Triangulation()
 {
+	if (_points[_currentCluster].size() < 3)
+		return;
+
 	vertexGrid = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
 	std::sort(vertexGrid.begin(), vertexGrid.end());
+
+	Vertex v1 = Vertex(vertexGrid[0]);
+	Vertex v2 = Vertex(vertexGrid[1]);
+	v1._index = 0;
+	v2._index = 1;
+
+	AddTriangle(v1, v2, vertexGrid[2], 2);
+
+	if (vertexGrid.size() < 4)
+		return;
+
+	for (int i = 3; i < vertexGrid.size(); i++)
+	{
+		Point newPoint = vertexGrid[i];
+
+		int j = 0;
+		for each (auto edge in _edges)
+		{
+			//We need to choose an point that doesn't belong to the current edge 
+			Point interiorP = interiorPoint(j);
+			CVector normalI = interiorNormal(edge, interiorP);
+			CVector newEdge = CVector(edge._v1._coords, newPoint);
+
+			int dotResult = normalI.dotProduct(newEdge);	
+			bool visible = dotResult < 0;
+
+
+			j++;
+		}
+	}
+
+}
+
+void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex)
+{
+	Vertex v3 = Vertex(p);
+
+	Edge e1 = Edge(v1, v2);
+	Edge e2 = Edge(v2, v3);
+	Edge e3 = Edge(v3, v1);
+
+	Triangle t = Triangle(e1, e2, e3);
+
+	_vertex.push_back(v1);
+	_vertex.push_back(v2);
+	_vertex.push_back(v2);
+
+	_edges.push_back(e1);
+	_edges.push_back(e2);
+	_edges.push_back(e3);
+
+	_triangles.push_back(t);
+
+	indexGrid.push_back(v1._index);
+	indexGrid.push_back(v2._index);
+	indexGrid.push_back(newIndex);
+}
+
+Point OpenGlWindow::interiorPoint(int currentIndex) const
+{
+	if (currentIndex == 0)
+		return _edges[1]._v2._coords;
+	else if (currentIndex == _edges.size())
+		return _edges[0]._v2._coords;
+	else
+		return _edges[0]._v1._coords;
+}
+
+CVector OpenGlWindow::interiorNormal(const Edge& edge, const Point& point)  const
+{
+	Point p1 = edge._v1._coords;
+	Point p2 = edge._v2._coords;
 	
-	//Base 2-triangulation
-	indexGrid.push_back(0);
-	indexGrid.push_back(1);
-	indexGrid.push_back(2);
+	float dX = p2.x_ - p1.x_;
+	float dY = p2.y_ - p1.y_;
 
-	indexGrid.push_back(0);
-	indexGrid.push_back(2);
-	indexGrid.push_back(3);
+	//We chosse one normal
+	CVector normal = CVector(p1, Point(p1.x_ - dX, p1.y_ + dY));
 
+	//We construct a vector using one point of the edge and another poitn from de structure
+	CVector intVec = CVector(p1, point);
+
+	//Is the normal the interior one?
+	float result = normal.dotProduct(intVec);
+
+	if (result > 0)
+		return normal;
+	else
+		return CVector(p1, Point(p1.x_ + dX, p1.y_ - dY));
 }
 
 void OpenGlWindow::clearCurrentPointAA(){
