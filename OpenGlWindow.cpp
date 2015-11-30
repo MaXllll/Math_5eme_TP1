@@ -331,6 +331,8 @@ void OpenGlWindow::GrahamScan()
 	bool avance = false;
 
 	do{
+
+		pivot = outPoints[currIndex];
 		Point prev;
 		if (currIndex == 0){
 			prev = outPoints[outPoints.size()-1];
@@ -354,26 +356,29 @@ void OpenGlWindow::GrahamScan()
 		if (isConvex(prevV,nextV)){
 			pivot = next;
 			avance = true;
+			if (currIndex == outPoints.size() - 1){
+				currIndex = 0;
+			}
+			else{
+				currIndex++;
+			}
 		}
 		else{
+			// if this is the first element, we must update the new first elem
 			sInit = prev;
 			outPoints.erase(outPoints.begin() + currIndex);
 			if (prevIsLast){
 				// last-1 because it will pass in the increment after this line so it will be equal to last in the end
 				// -2 because size if size is 5 then last element index is 4
-				currIndex = outPoints.size() - 2; 
+				currIndex = outPoints.size() - 1; 
 			}else{
 				currIndex--;
 			}
+			//pivot = outPoints[currIndex];
 			pivot = sInit;
 			avance = false;
 		}
-		if (currIndex == outPoints.size()-1){
-			currIndex = 0;
-		}
-		else{
-			currIndex++;
-		}
+
 	} while (pivot != sInit || avance == false);
 
 	_pointsAA.at(_currentCluster).clear();
