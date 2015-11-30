@@ -196,7 +196,7 @@ void OpenGlWindow::Triangulation()
 	_edges.clear();
 	_vertex.clear();
 	indexGrid.clear();
-	_edgesExt.clear();
+	_edgeToTriangle.clear();
 	pointIndex = 0;
 
 	if (_points[_currentCluster].size() < 3)
@@ -213,7 +213,7 @@ void OpenGlWindow::Triangulation()
 
 	AddTriangle(v1, v2, vertexGrid[2], pointIndex++);
 
-	_edgesExt.insert(_edgesExt.begin(), _edges.begin(), _edges.end());
+	//_edgesExt.insert(_edgesExt.begin(), _edges.begin(), _edges.end());
 
 	if (vertexGrid.size() < 4)
 		return;
@@ -224,11 +224,24 @@ void OpenGlWindow::Triangulation()
 	{
 		Point newPoint = vertexGrid[i];
 
-		for (int j = 0; j < _edgesExt.size(); j++)
+		for (int j = 0; j < _edges.size(); j++)
 		{
-			auto edge = _edgesExt[j];
+			auto edge = _edges[j];
+
+			//If it's an iterior edge, we can skip
+			auto it = _edgeToTriangle.find(edge);
+			if (it != _edgeToTriangle.end())
+			{
+				if (it->second.size() >= 2)
+					continue;
+			}
+			else
+			{
+				continue;
+			}
+
 			//We need to choose an point that doesn't belong to the current edge 
-			Point interiorP = interiorPoint(j);
+			Point interiorP = interiorPoint(edge);
 			CVector normalI = interiorNormal(edge, interiorP);
 			CVector newEdge = CVector(edge._v1._coords, newPoint);
 
@@ -272,9 +285,12 @@ void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex)
 	_vertex.push_back(v2);
 	_vertex.push_back(v2);
 
-	_edges.push_back(e1);
-	_edges.push_back(e2);
-	_edges.push_back(e3);
+	if (std::find(_edges.begin(), _edges.end(), e1) == _edges.end())
+		_edges.push_back(e1);
+	if (std::find(_edges.begin(), _edges.end(), e2) == _edges.end())
+		_edges.push_back(e2);
+	if (std::find(_edges.begin(), _edges.end(), e3) == _edges.end())
+		_edges.push_back(e3);
 
 	_triangles.push_back(t);
 
@@ -282,33 +298,48 @@ void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex)
 	indexGrid.push_back(v2._index);
 	indexGrid.push_back(newIndex);
 
-	if (newIndex != 2)
+	std::vector<Triangle> vect1 = std::vector<Triangle>();
+	vect1.push_back(t);
+
+	auto it = _edgeToTriangle.find(e1);
+	if (it != _edgeToTriangle.end())
+		it->second.push_back(t);
+	else
+		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e1, vect1));
+
+	it = _edgeToTriangle.find(e2);
+	if (it != _edgeToTriangle.end())
+		it->second.push_back(t);
+	else
 	{
-		_edgesExt.erase(std::remove(_edgesExt.begin(), _edgesExt.end(), e1), _edgesExt.end());
+		std::vector<Triangle> vect2 = std::vector<Triangle>(vect1);
+		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e2, vect2));
+	}
 
-		if (std::find(_edgesExt.begin(), _edgesExt.end(), e2) == _edgesExt.end())
-			_edgesExt.push_back(e2);
-		else
-			_edgesExt.erase(std::remove(_edgesExt.begin(), _edgesExt.end(), e2), _edgesExt.end());
-
-		if (std::find(_edgesExt.begin(), _edgesExt.end(), e3) == _edgesExt.end())
-			_edgesExt.push_back(e3);
-		else
-			_edgesExt.erase(std::remove(_edgesExt.begin(), _edgesExt.end(), e3), _edgesExt.end());
-
-		_edges.push_back(e2);
-		_edges.push_back(e3);
+	it = _edgeToTriangle.find(e3);
+	if (it != _edgeToTriangle.end())
+		it->second.push_back(t);
+	else
+	{
+		std::vector<Triangle> vect3 = std::vector<Triangle>(vect1);
+		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e3, vect3));
 	}
 }
 
-Point OpenGlWindow::interiorPoint(int currentIndex) const
+Point OpenGlWindow::interiorPoint(Edge _currentEdge) const
 {
-	if (currentIndex == 0)
-		return _edges[1]._v2._coords;
-	else if (currentIndex == _edges.size() - 1)
-		return _edges[0]._v2._coords;
-	else
-		return _edges[0]._v1._coords;
+	for (int j = 0; j < _edges.size(); j++)
+	{
+		auto edge = _edges[j];
+
+		Vertex v1 = edge._v1;
+		Vertex v2 = edge._v2;
+
+		if (v1 != _currentEdge._v1 && v1 != _currentEdge._v2)
+			return v1._coords;
+		if (v2 != _currentEdge._v1 && v2 != _currentEdge._v2)
+			return v2._coords;
+	}
 }
 
 CVector OpenGlWindow::interiorNormal(const Edge& edge, const Point& point)  const

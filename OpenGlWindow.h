@@ -53,10 +53,12 @@ private:
 	std::vector<Edge> _edges = std::vector<Edge>();
 	std::vector<Triangle> _triangles = std::vector<Triangle>();
 
-	std::vector<Edge> _edgesExt = std::vector<Edge>();
+	//std::vector<Edge> _edgesExt = std::vector<Edge>();
+
+	std::map<Edge, std::vector<Triangle>> _edgeToTriangle = std::map<Edge, std::vector<Triangle>>();
 
 	void AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex);
-	Point interiorPoint(int currentIndex) const;
+	Point interiorPoint(Edge currentEdge) const;
 	CVector interiorNormal(const Edge& edge, const Point& point) const;
 
 	int pointIndex = 0;

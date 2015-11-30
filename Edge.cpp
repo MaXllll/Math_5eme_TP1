@@ -46,3 +46,8 @@ bool Edge::operator==(const Edge& e) const
 {
 	return (e._v1 == this->_v1 && e._v2 == this->_v2) || (e._v1 == this->_v2 && e._v2 == this->_v1);
 }
+
+bool Edge::operator<(const Edge& e) const
+{
+	return (e._v1._coords.x_ + e._v2._coords.x_) > (this->_v1._coords.x_ + this->_v2._coords.x_);
+}

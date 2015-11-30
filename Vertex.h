@@ -19,5 +19,6 @@ public:
 	//Vertex& operator=(const Vertex& v);
 
 	bool operator==(const Vertex& e) const;
+	bool operator!=(const Vertex& e) const;
 };
 

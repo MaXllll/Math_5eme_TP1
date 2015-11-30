@@ -49,3 +49,8 @@ bool Vertex::operator==(const Vertex& e) const
 {
 	return e._coords == this->_coords;
 }
+
+bool Vertex::operator != (const Vertex& e) const
+{
+	return !((*this) == e);
+}
