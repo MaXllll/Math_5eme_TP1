@@ -331,7 +331,6 @@ void OpenGlWindow::GrahamScan()
 	bool avance = false;
 
 	do{
-
 		pivot = outPoints[currIndex];
 		Point prev;
 		if (currIndex == 0){
@@ -353,7 +352,8 @@ void OpenGlWindow::GrahamScan()
 
 		CVector prevV = CVector(prev, pivot);
 		CVector nextV = CVector(pivot, next);
-		if (isConvex(prevV,nextV)){
+		// pivot != next pour enlever les doublons
+		if (isConvex(prevV,nextV) && pivot != next){
 			pivot = next;
 			avance = true;
 			if (currIndex == outPoints.size() - 1){
