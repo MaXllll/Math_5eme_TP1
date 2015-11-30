@@ -127,8 +127,10 @@ void OpenGlWindow::paintGL()
 	// Activate shader
 	//basicShader.Bind();
 
-
+	//lines
 	std::vector<float> pointsF = std::vector<float>();
+	//points
+	std::vector<float> pointsC = std::vector<float>();
 	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS)
 	{
 
@@ -136,7 +138,7 @@ void OpenGlWindow::paintGL()
 
 		if (model->mode == model->GRAHAMSCAN){
 			GrahamScan();
-			AddBaryCenter(pointsF);
+			AddBaryCenter(pointsC);
 		}
 		else{
 			JarvisMarch();
@@ -163,7 +165,6 @@ void OpenGlWindow::paintGL()
 
 			for (int i = 0; i < _points.size(); i++)
 			{
-				std::vector<float> pointsC = std::vector<float>();
 				convertPointToFloat(_points[i], pointsC, pointColor2);
 				paintPoints(pointsC);
 			}
