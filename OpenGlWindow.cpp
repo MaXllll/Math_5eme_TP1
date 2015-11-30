@@ -24,6 +24,8 @@
 #include <QtWidgets\qapplication.h>
 #include <qdebug.h>
 
+#include "Circle.h"
+
 #define PI 3.14159265
 
 EsgiShader basicShader;
@@ -266,8 +268,69 @@ void OpenGlWindow::Triangulation()
 		jobs.clear();
 	}
 
+	//Flipping Edge
+	for (int j = 0; j < _edges.size(); j++)
+	{
+		auto edge = _edges[j];
+
+		//If it's an exterior edge, we can skip
+		auto it = _edgeToTriangle.find(edge);
+		if (it != _edgeToTriangle.end())
+		{
+			if (it->second.size() == 1)
+				continue;
+		}
+		else
+		{
+			continue;
+		}
+
+
+		isDelaunay(it->second[0], it->second[1]);
+
+	}
+
 
 }
+
+float length(Point p1, Point p2)
+{
+	return sqrt((p1.x_ - p2.x_) * (p1.x_ - p2.x_) + (p1.y_ - p2.y_) * (p1.y_ - p2.y_));
+}
+
+void findTrianglePoints(const Triangle& t1, const Triangle& t2, std::vector<Point>& outVec)
+{
+	outVec.push_back(t1._e1._v1._coords);
+	outVec.push_back(t1._e1._v2._coords);
+	outVec.push_back(t1._e2._v2._coords);
+
+	if (std::find(outVec.begin(), outVec.end(), t2._e1._v1._coords) == outVec.end())
+		outVec.push_back(t2._e1._v1._coords);
+
+	if (std::find(outVec.begin(), outVec.end(), t2._e1._v2._coords) == outVec.end())
+		outVec.push_back(t2._e1._v2._coords);
+
+	if (std::find(outVec.begin(), outVec.end(), t2._e2._v2._coords) == outVec.end())
+		outVec.push_back(t2._e2._v2._coords);
+
+}
+
+
+bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2) const
+{
+	std::vector<Point> tPoints = std::vector<Point>();
+
+	findTrianglePoints(t1, t2, tPoints);
+
+	Circle c1 = Circle();
+	c1.CalculateCircle(tPoints[0], tPoints[1], tPoints[2]);
+
+	if (length(c1._center, tPoints[3]) < c1._radius)
+		return false;
+	else
+		return true;
+}
+
 
 void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex)
 {

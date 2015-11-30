@@ -57,6 +57,8 @@ private:
 
 	std::map<Edge, std::vector<Triangle>> _edgeToTriangle = std::map<Edge, std::vector<Triangle>>();
 
+	bool isDelaunay(Triangle t1, Triangle t2) const;
+	void CalculateCircle(Point p1, Point p2, Point p3);
 	void AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex);
 	Point interiorPoint(Edge currentEdge) const;
 	CVector interiorNormal(const Edge& edge, const Point& point) const;
