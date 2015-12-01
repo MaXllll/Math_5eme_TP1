@@ -286,7 +286,11 @@ void OpenGlWindow::Triangulation()
 		}
 
 
-		isDelaunay(it->second[0], it->second[1]);
+		bool toBeFlipped = !isDelaunay(it->second[0], it->second[1]);
+		if (toBeFlipped)
+		{
+
+		}
 
 	}
 
