@@ -53,15 +53,20 @@ private:
 	std::vector<Edge> _edges = std::vector<Edge>();
 	std::vector<Triangle> _triangles = std::vector<Triangle>();
 
+	std::vector<Triangle> _trianglesIndex = std::vector<Triangle>();
+
 	//std::vector<Edge> _edgesExt = std::vector<Edge>();
 
 	std::map<Edge, std::vector<Triangle>> _edgeToTriangle = std::map<Edge, std::vector<Triangle>>();
 
 	bool isDelaunay(Triangle t1, Triangle t2) const;
 	void CalculateCircle(Point p1, Point p2, Point p3);
-	void AddTriangle(Vertex v1, Vertex v2, Point p, int newIndex);
+	void AddTriangleNew(Vertex v1, Vertex v2, Point p, int newIndex);
 	Point interiorPoint(Edge currentEdge) const;
 	CVector interiorNormal(const Edge& edge, const Point& point) const;
+	void findTrianglePoints(const Triangle& t1, const Triangle& t2, std::vector<Vertex>& outVec) const;
+	void AddTriangle(Vertex v1, Vertex v2, Vertex v3);
+	void feedIndexGrid();
 
 	int pointIndex = 0;
 

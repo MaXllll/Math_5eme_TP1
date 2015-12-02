@@ -19,6 +19,7 @@ public:
 
 
 	bool operator==(const Edge& e) const;
+	bool operator!=(const Edge& e) const;
 	bool operator<(const Edge& e) const;
 
 	//bool operator!=(const Edge& e)
