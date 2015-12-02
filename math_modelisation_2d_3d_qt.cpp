@@ -72,9 +72,25 @@ void Math_modelisation_2D_3D_QT::JarvisMarch()
 void Math_modelisation_2D_3D_QT::Triangulation()
 {
 	model.mode = model.TRIANGULATION,
-	mainWidget->Triangulation();
+	mainWidget->Triangulation(false);
 	mainWidget->repaint();
 }
+
+void Math_modelisation_2D_3D_QT::Flipping()
+{
+	model.mode = model.FLIPPING,
+	mainWidget->Triangulation(true);
+	mainWidget->repaint();
+}
+
+
+void Math_modelisation_2D_3D_QT::Voronoi()
+{
+	model.mode = model.VORONOI,
+	mainWidget->Voronoi();
+	mainWidget->repaint();
+}
+
 
 void Math_modelisation_2D_3D_QT::createActions()
 {
@@ -103,6 +119,14 @@ void Math_modelisation_2D_3D_QT::createActions()
 	triangulation->setStatusTip(tr("Triangulation"));
 	connect(triangulation, SIGNAL(triggered()), this, SLOT(Triangulation()));
 
+	flipping = new QAction(tr("&Flipping"), this);
+	flipping->setStatusTip(tr("Flipping"));
+	connect(flipping, SIGNAL(triggered()), this, SLOT(Flipping()));
+
+	voronoi = new QAction(tr("&Voronoi"), this);
+	voronoi->setStatusTip(tr("Voronoi"));
+	connect(voronoi, SIGNAL(triggered()), this, SLOT(Voronoi()));
+
 }
 
 void Math_modelisation_2D_3D_QT::createMenus()
@@ -116,6 +140,8 @@ void Math_modelisation_2D_3D_QT::createMenus()
 	editMenu->addAction(jarvisMarchAct);
 	editMenu->addAction(grahamScanAct);
 	editMenu->addAction(triangulation);
+	editMenu->addAction(flipping);
+	editMenu->addAction(voronoi);
 
 
 	menuBar()->addSeparator();

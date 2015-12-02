@@ -17,9 +17,10 @@ public:
 	void newCluster();
 	void clear();
 	void GrahamScan();
-	void Triangulation();
+	void Triangulation(bool flipping);
 	void JarvisMarch();	
 	void clearCurrentPointAA();
+	void voronoi();
 
 protected:
 	void initializeGL();
@@ -34,6 +35,7 @@ private:
 	const glm::vec3 pointColor2 = glm::vec3(1.0f, 0.0f, 0.0f);
 	const glm::vec3 baryCenterColor = glm::vec3(0.36f, 0.55f, 0.81f);
 	const glm::vec3 lineColor = glm::vec3(1.0f, 0.5f, 0.3f);
+	const glm::vec3 voronoiColor = glm::vec3(1.0f, 1.0f, 1.0f);
 		
 	std::vector<std::vector<Point>> _points = std::vector<std::vector<Point>>();
 	std::vector<std::vector<Point>> _pointsAA = std::vector<std::vector<Point>>();
@@ -70,12 +72,16 @@ private:
 
 	int pointIndex = 0;
 
+	//Voronoi
+	std::vector<Point> _centers = std::vector<Point>();
+	std::vector<int> _indexCenters = std::vector<int>();
 
 	//Points
 	void initializePolygone();
 	void paintPoints(std::vector<float>& pointsF) const;
 	void PaintBaryCenter() const;
 	void paintGrid();
+	void paintVoronoi();
 
 	//Utils
 	void searchClosedPoint(const Point click, const std::vector<std::vector<Point>>& points, Point& p) const;

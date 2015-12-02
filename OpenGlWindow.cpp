@@ -173,27 +173,38 @@ void OpenGlWindow::paintGL()
 		}
 		grahanScanShader.Unbind();
 	}
-	else if (model->mode == model->TRIANGULATION)
+	else if (model->mode == model->TRIANGULATION || model->mode == model->FLIPPING)
 	{
 
-		for (int i = 0; i < _points.size(); i++)
-		{
-			Triangulation();
+		//for (int i = 0; i < _points.size(); i++)
+		//{
+			Triangulation(model->mode == model->FLIPPING);
 
-			convertPointToFloat(_points[i], pointsF, pointColor);
+			//convertPointToFloat(_points[i], pointsF, pointColor);
 
 			//paintPoints(pointsF);
 
 			//paintLines(pointsF);
 			paintGrid();
-		}
+		//}
+	}
+	else if (model->mode == model->VORONOI)
+	{
+		grahanScanShader.Bind();
+
+		voronoi();
+
+		paintGrid();
+		paintVoronoi();
+
+		grahanScanShader.Unbind();
 	}
 
 }
 
 #pragma region Triangulation
 
-void OpenGlWindow::Triangulation()
+void OpenGlWindow::Triangulation(bool flipping)
 {
 	_triangles.clear();
 	_edges.clear();
@@ -269,6 +280,9 @@ void OpenGlWindow::Triangulation()
 		jobs.clear();
 	}
 
+	if (!flipping)
+		return;
+
 	//Flipping Edge
 	for (int j = 0; j < _edges.size(); j++)
 	{
@@ -286,7 +300,6 @@ void OpenGlWindow::Triangulation()
 			continue;
 		}
 
-
 		bool toBeFlipped = !isDelaunay(it->second[0], it->second[1]);
 		if (toBeFlipped)
 		{
@@ -300,6 +313,8 @@ void OpenGlWindow::Triangulation()
 			_edgeToTriangle.erase(_edgeToTriangle.find(edge));
 			_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1));
 			_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t2));
+			_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t1));
+			_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t2));
 
 			std::vector<Edge> tEdges = std::vector<Edge>();
 			tEdges.push_back(t1._e1);
@@ -555,8 +570,110 @@ void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 
 		glBindVertexArray(0);
 	}
+}	
+
+
+#pragma endregion
+
+#pragma region Voronoi
+
+void OpenGlWindow::voronoi()
+{
+	Triangulation(true);
+	_centers.clear();
+	_indexCenters.clear();
+
+	for (int j = 0; j < _edges.size(); j++)
+	{
+		auto edge = _edges[j];
+
+		//If it's an exterior edge, we can skip
+		auto it = _edgeToTriangle.find(edge);
+		if (it != _edgeToTriangle.end())
+		{
+			if (it->second.size() == 1)
+				continue;
+		}
+		else
+		{
+			continue;
+		}
+
+		Triangle t1 = it->second[0];
+		Triangle t2 = it->second[1];
+
+		Circle c1 = Circle();
+		Circle c2 = Circle();
+		c1.CalculateCircle(t1._e1._v1._coords, t1._e1._v2._coords, t1._e2._v2._coords);
+		c2.CalculateCircle(t2._e1._v1._coords, t2._e1._v2._coords, t2._e2._v2._coords);
+
+		auto itFind1 =std::find(_centers.begin(), _centers.end(), c1._center);
+
+		if (itFind1 == _centers.end())
+		{
+			_indexCenters.push_back(_centers.size());
+			_centers.push_back(c1._center);
+		}
+		else
+		{
+			_indexCenters.push_back(itFind1 - _centers.begin());
+		}
+
+		auto itFind2 = std::find(_centers.begin(), _centers.end(), c2._center);
+
+		if (itFind2 == _centers.end())
+		{
+			_indexCenters.push_back(_centers.size());
+			_centers.push_back(c2._center);
+		}
+		else
+		{
+			_indexCenters.push_back(itFind2 - _centers.begin());
+		}
+
+	}
 }
 
+void OpenGlWindow::paintVoronoi()
+{
+	GLuint VBO, VAO, EBO;
+	
+	std::vector<float> centersVertex = std::vector<float>();
+
+
+	convertPointToFloat(_centers, centersVertex, voronoiColor);
+
+	if (centersVertex.size() == 0)
+		return;
+	//pointsF.erase(pointsF.begin());
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, centersVertex.size() * sizeof(float), &centersVertex.front(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indexCenters.size() * sizeof(float), &_indexCenters.front(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	// Color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+
+	glBindVertexArray(VAO);	
+
+	glDrawElements(GL_LINES, _indexCenters.size(), GL_UNSIGNED_INT, 0);
+	//glDrawArrays(GL_POINTS, 0, centersVertex.size() / 6);
+	//glDrawArrays(GL_LINES, 0, pointsF.size() / 6);
+
+	glBindVertexArray(0);
+}
 
 #pragma endregion
 
@@ -721,7 +838,7 @@ double convertViewportToOpenGLCoordinate(double x)
 
 void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 {
-	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS || model->mode == model->TRIANGULATION){
+	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS || model->mode == model->TRIANGULATION || model->mode == model->FLIPPING || model->mode == model->VORONOI){
 		Point clickP = Point();
 		clickP.x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
 		clickP.y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
@@ -783,7 +900,6 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 		pointsF.push_back(color.z);
 	}
 }
-
 
 void OpenGlWindow::printVector(const std::vector<Point>& points) const
 {

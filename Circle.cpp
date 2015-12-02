@@ -17,20 +17,22 @@ Circle::~Circle()
 {
 }
 
-void Circle::CalculateCircle(Point pt1, Point pt2, Point pt3)
+void Circle::CalculateCircle(Point p0, Point p1, Point p2)
 {
-	double yDelta_a = pt2.y_ - pt1.y_;
-	double xDelta_a = pt2.x_ - pt1.x_;
-	double yDelta_b = pt3.y_ - pt2.y_;
-	double xDelta_b = pt3.x_ - pt2.x_;
+	float dA = p0.x_ * p0.x_ + p0.y_ * p0.y_;
+	float dB = p1.x_ * p1.x_ + p1.y_ * p1.y_;
+	float dC = p2.x_ * p2.x_ + p2.y_ * p2.y_;
 
-	double aSlope = yDelta_a / xDelta_a;
-	double bSlope = yDelta_b / xDelta_b;
+	float aux1 = (dA*(p2.y_ - p1.y_) + dB*(p0.y_ - p2.y_) + dC*(p1.y_ - p0.y_));
+	float aux2 = -(dA*(p2.x_ - p1.x_) + dB*(p0.x_ - p2.x_) + dC*(p1.x_ - p0.x_));
+	float div = (2 * (p0.x_*(p2.y_ - p1.y_) + p1.x_*(p0.y_ - p2.y_) + p2.x_*(p1.y_ - p0.y_)));
 
+	if (div == 0){
+		return;
+	}
 
-	this->_center.x_ = (aSlope*bSlope*(pt1.y_ - pt3.y_) + bSlope*(pt1.x_ + pt2.x_)
-		- aSlope*(pt2.x_ + pt3.x_)) / (2 * (bSlope - aSlope));
-	this->_center.y_ = -1 * (this->_center.x_ - (pt1.x_ + pt2.x_) / 2) / aSlope + (pt1.y_ + pt2.y_) / 2;
+	_center.x_ = aux1 / div;
+	_center.y_ = aux2 / div;
 
-	this->_radius = sqrt((pt1.x_ - _center.x_) * (pt1.x_ - _center.x_) + (pt1.y_ - _center.y_) * (pt1.y_ - _center.y_));
+	this->_radius = sqrt((p0.x_ - _center.x_) * (p0.x_ - _center.x_) + (p0.y_ - _center.y_) * (p0.y_ - _center.y_));
 }

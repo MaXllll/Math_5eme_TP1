@@ -21,8 +21,10 @@ private slots:
 	void repeatPointMode();
 
 	void GrahamScan();
-	void Triangulation();
 	void JarvisMarch();
+	void Triangulation();
+	void Flipping();
+	void Voronoi();
 
 private:
 	void createActions();
@@ -39,6 +41,8 @@ private:
 	QAction *grahamScanAct;
 	QAction *jarvisMarchAct;
 	QAction *triangulation;
+	QAction *flipping;
+	QAction *voronoi;
 
 private:
 	Ui::Math_modelisation_2D_3D_QTClass ui;

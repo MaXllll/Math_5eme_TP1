@@ -24,7 +24,8 @@ public:
 	void NewCluster();
 	void GrahamScan();
 	void JarvisMarch();
-	void Triangulation();
+	void Triangulation(bool flipping);
+	void Voronoi();
 	void repaint();
 	void clear();
 	OpenGlWindow* getGLWindow();
