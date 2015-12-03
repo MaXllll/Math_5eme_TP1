@@ -216,7 +216,7 @@ void OpenGlWindow::Triangulation(bool flipping)
 	_edgeToTriangle.clear();
 	pointIndex = 0;
 
-	if (_points[_currentCluster].size() < 3)
+	if (_points.size() == 0 || _points[_currentCluster].size() < 3)
 		return;
 
 	vertexGrid = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
@@ -269,7 +269,6 @@ void OpenGlWindow::Triangulation(bool flipping)
 				std::function<void()> fct = std::bind(&OpenGlWindow::AddTriangleNew, this, edge._v1, edge._v2, newPoint, pointIndex);
 				jobs.push_back(fct);
 
-				//AddTriangle(edge._v1, edge._v2, newPoint, pointIndex++);
 			}
 		}
 
@@ -285,10 +284,13 @@ void OpenGlWindow::Triangulation(bool flipping)
 	if (!flipping)
 		return;
 
+	std::vector<Edge> edgeToCheck = std::vector<Edge>(_edges.begin(), _edges.end());
+
 	//Flipping Edge
-	for (int j = 0; j < _edges.size(); j++)
+	while (edgeToCheck.size() > 0)
 	{
-		auto edge = _edges[j];
+		auto edge = edgeToCheck[0];
+		edgeToCheck.erase(std::find(edgeToCheck.begin(), edgeToCheck.end(), edge));
 
 		//If it's an exterior edge, we can skip
 		auto it = _edgeToTriangle.find(edge);
@@ -331,6 +333,7 @@ void OpenGlWindow::Triangulation(bool flipping)
 				auto edgeC = tEdges[i];
 				if (edgeC != edge)
 				{
+					edgeToCheck.push_back(edgeC);
 					auto itC = _edgeToTriangle.find(edgeC);
 					if (itC->second[0] == t1 || itC->second[0] == t2){
 						itC->second.erase(itC->second.begin());
@@ -347,6 +350,8 @@ void OpenGlWindow::Triangulation(bool flipping)
 
 			AddTriangle(edge._v1, tPoints[0], tPoints[1]);
 			AddTriangle(edge._v2, tPoints[0], tPoints[1]);
+
+			edgeToCheck.push_back(Edge(tPoints[0], tPoints[1]));
 
 		}
 
@@ -385,6 +390,9 @@ bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2) const
 
 	Circle c1 = Circle();
 	c1.CalculateCircle(tPoints[0]._coords, tPoints[1]._coords, tPoints[2]._coords);
+
+	if (tPoints.size() < 4)
+		return false;
 
 	if (length(c1._center, tPoints[3]._coords) < c1._radius)
 		return false;
@@ -449,6 +457,7 @@ void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Vertex v3)
 		std::vector<Triangle> vect3 = std::vector<Triangle>(vect1);
 		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e3, vect3));
 	}
+
 }
 
 Point OpenGlWindow::interiorPoint(Edge _currentEdge) const
@@ -508,12 +517,12 @@ void OpenGlWindow::feedIndexGrid()
 
 void OpenGlWindow::paintGrid()
 {
-	if (vertexGrid.size() == 0)
+	feedIndexGrid();
+	if (vertexGrid.size() == 0 || indexGrid.size() == 0)
 		return;
 	std::vector<float> vertexF = std::vector<float>();
 
 	convertPointToFloat(vertexGrid, vertexF, lineColor);
-	feedIndexGrid();
 
 	GLuint VBO, VAO, EBO;
 	glGenVertexArrays(1, &VAO);
@@ -636,6 +645,9 @@ void OpenGlWindow::voronoi()
 
 void OpenGlWindow::paintVoronoi()
 {
+	if (_centers.size() == 0 || _indexCenters.size() == 0)
+		return;
+
 	GLuint VBO, VAO, EBO;
 	
 	std::vector<float> centersVertex = std::vector<float>();
@@ -1105,5 +1117,16 @@ void OpenGlWindow::clear()
 	_pointsAA.push_back(std::vector<Point>());
 }
 
+void OpenGlWindow::resizeGL(int width, int height)
+{
+	//glViewport(0, 0, width, height);
+	//glMatrixMode(GL_PROJECTION);
+	//glLoadIdentity();
+	//gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
+	//glMatrixMode(GL_MODELVIEW);
+	//glLoadIdentity();
+
+
+}
 
 #pragma endregion
