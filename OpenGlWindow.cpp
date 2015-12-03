@@ -131,7 +131,10 @@ void OpenGlWindow::paintGL()
 	//basicShader.Bind();
 
 
+	//lines
 	std::vector<float> pointsF = std::vector<float>();
+	//points
+	std::vector<float> pointsC = std::vector<float>();
 	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS)
 	{
 
@@ -139,7 +142,7 @@ void OpenGlWindow::paintGL()
 
 		if (model->mode == model->GRAHAMSCAN){
 			GrahamScan();
-			AddBaryCenter(pointsF);
+			AddBaryCenter(pointsC);
 		}
 		else{
 			JarvisMarch();
@@ -166,7 +169,6 @@ void OpenGlWindow::paintGL()
 
 			for (int i = 0; i < _points.size(); i++)
 			{
-				std::vector<float> pointsC = std::vector<float>();
 				convertPointToFloat(_points[i], pointsC, pointColor2);
 				paintPoints(pointsC);
 			}
@@ -732,13 +734,12 @@ void OpenGlWindow::paintVoronoi()
 
 void OpenGlWindow::GrahamScan()
 {
-	if (_points.size() == 0 || _points[_currentCluster].size() < 2){
+	if (_points.size() == 0 || _points[_currentCluster].size() < 3){
 		if (_pointsAA.size() < _points.size()){
 			_pointsAA.push_back(std::vector<Point>());
 		}
 		return;
 	}
-
 
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
@@ -762,7 +763,7 @@ void OpenGlWindow::GrahamScan()
 		float angle1 = v.angle(currentVec1);
 		float angle2 = v.angle(currentVec2);
 		// We check if we must take the inner or outer angle between the two vectors
-		if (v.crossProduct(currentVec1) < 0){
+		if (v.crossProduct(currentVec1)<0){
 			angle1 = 2 * PI - angle1;
 		}
 		if (v.crossProduct(currentVec2) < 0){
@@ -772,8 +773,84 @@ void OpenGlWindow::GrahamScan()
 		return angle1 < angle2;
 	});
 
-	std::cout << " Points triés par angle : " << outPoints.size() << " " << std::endl;
-	printVector(outPoints);
+	//std::cout << " Points triés par angle : " << outPoints.size() << " " << std::endl;
+	//printVector(outPoints);
+	Point sInit = outPoints[0];
+	Point pivot = sInit;
+	int currIndex = 0;
+	bool prevIsLast = true;
+	bool avance = false;
+
+	do{
+		pivot = outPoints[currIndex];
+		Point prev;
+		if (currIndex == 0){
+			prev = outPoints[outPoints.size() - 1];
+			prevIsLast = true;
+		}
+		else
+		{
+			prev = outPoints[currIndex - 1];
+			prevIsLast = false;
+		}
+		Point next;
+		if (currIndex == outPoints.size() - 1){
+			next = outPoints[0];
+		}
+		else{
+			next = outPoints[currIndex + 1];
+		}
+
+		CVector prevV = CVector(prev, pivot);
+		CVector nextV = CVector(pivot, next);
+		// pivot != next pour enlever les doublons
+		if (isConvex(prevV, nextV) && pivot != next){
+			pivot = next;
+			avance = true;
+			if (currIndex == outPoints.size() - 1){
+				currIndex = 0;
+			}
+			else{
+				currIndex++;
+			}
+		}
+		else{
+			// if this is the first element, we must update the new first elem
+			sInit = prev;
+			outPoints.erase(outPoints.begin() + currIndex);
+			if (prevIsLast){
+				// last-1 because it will pass in the increment after this line so it will be equal to last in the end
+				// -2 because size if size is 5 then last element index is 4
+				currIndex = outPoints.size() - 1;
+			}
+			else{
+				currIndex--;
+			}
+			//pivot = outPoints[currIndex];
+			pivot = sInit;
+			avance = false;
+		}
+
+	} while (pivot != sInit || avance == false);
+
+	_pointsAA.at(_currentCluster).clear();
+	//.clear();
+	_pointsAA.insert(_pointsAA.begin() + _currentCluster, outPoints);
+	_pointsAA[_currentCluster].push_back(outPoints[0]);
+	//return outPoints;
+}
+
+bool OpenGlWindow::isConvex(CVector& v, CVector& v2) const{
+	float angle = v.angle(v2);
+	if (v.crossProduct(v2)<0){
+		angle = 2 * PI - angle;
+	}
+	if (angle > PI){
+		return false;
+	}
+	else{
+		return true;
+	}
 }
 
 void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
@@ -791,7 +868,6 @@ void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& ba
 }
 
 
-#pragma endregion
 void OpenGlWindow::AddBaryCenter(std::vector<float>& pointsF) const
 {
 	//pos
@@ -804,6 +880,7 @@ void OpenGlWindow::AddBaryCenter(std::vector<float>& pointsF) const
 	pointsF.push_back(baryCenterColor.y);
 	pointsF.push_back(baryCenterColor.z);
 }
+#pragma endregion
 
 #pragma region Jarvis March
 
