@@ -32,6 +32,7 @@ private:
 	//QString strippedName(const QString &fullFileName);
 
 	QMenu *fileMenu;
+	QMenu *pointMenu;
 	QMenu *editMenu;
 	QMenu *helpMenu;
 
@@ -42,7 +43,9 @@ private:
 	QAction *jarvisMarchAct;
 	QAction *triangulation;
 	QAction *flipping;
-	QAction *voronoi;
+	QAction *voronoi;	
+	QAction *createPoint;
+	QAction *movePoint;
 
 private:
 	Ui::Math_modelisation_2D_3D_QTClass ui;

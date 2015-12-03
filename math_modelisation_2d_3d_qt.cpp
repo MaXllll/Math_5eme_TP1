@@ -92,6 +92,7 @@ void Math_modelisation_2D_3D_QT::Voronoi()
 }
 
 
+
 void Math_modelisation_2D_3D_QT::createActions()
 {
 	//New Menu
@@ -127,6 +128,17 @@ void Math_modelisation_2D_3D_QT::createActions()
 	voronoi->setStatusTip(tr("Voronoi"));
 	connect(voronoi, SIGNAL(triggered()), this, SLOT(Voronoi()));
 
+	createPoint = new QAction(tr("&createPoint"), this);
+	createPoint->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
+	createPoint->setStatusTip(tr("Create Point"));
+	connect(createPoint, SIGNAL(triggered()), this, SLOT(createPointMode()));
+
+	movePoint = new QAction(tr("&movePoint"), this);
+	movePoint->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
+	//clearAct->setShortcuts(new QKeySequence(Qt::CTRL + Qt::Key_C));
+	movePoint->setStatusTip(tr("Move Point"));
+	connect(movePoint, SIGNAL(triggered()), this, SLOT(movePointMode()));
+
 }
 
 void Math_modelisation_2D_3D_QT::createMenus()
@@ -135,6 +147,11 @@ void Math_modelisation_2D_3D_QT::createMenus()
 	fileMenu->addAction(newAct);
 	fileMenu->addAction(clearAct);
 
+	editMenu = menuBar()->addMenu(tr("&Point"));
+
+	editMenu->addAction(createPoint);
+	editMenu->addAction(movePoint);
+
 	editMenu = menuBar()->addMenu(tr("&Edit"));
 
 	editMenu->addAction(jarvisMarchAct);
@@ -142,6 +159,8 @@ void Math_modelisation_2D_3D_QT::createMenus()
 	editMenu->addAction(triangulation);
 	editMenu->addAction(flipping);
 	editMenu->addAction(voronoi);
+
+
 
 
 	menuBar()->addSeparator();

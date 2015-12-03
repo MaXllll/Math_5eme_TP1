@@ -983,8 +983,9 @@ void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 			_hasClick = !_hasClick;
 			if (_hasClick)
 			{
-				searchClosedPoint(clickP, _points, _movingPoint);
+				searchClosedPoint(clickP, _points);
 			}
+			this->update();
 		}
 
 	}
@@ -994,21 +995,25 @@ void OpenGlWindow::mouseMoveEvent(QMouseEvent *event)
 {
 	if (model->splineMode == model->MOVEPOINT && _hasClick)
 	{
-		_movingPoint.x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
-		_movingPoint.y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
-		_movingPoint.z_ = 0.0f;
+		//std::cout << "MovingPoint Begin TONPAYRE : " << _movingPoint.x_ << " " << _movingPoint.y_ << std::endl;
+		(*_movingPointPtr).x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
+		(*_movingPointPtr).y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
+		(*_movingPointPtr).z_ = 0.0f;
+		std::cout << "MovingPoint End TONPAYRE: " << (*_movingPointPtr).x_ << " " << (*_movingPointPtr).y_ << std::endl;
+		std::cout << "MovingPoint Points TONPAYRE: " << _points[_currentCluster][0].x_ << " " << _points[_currentCluster][0].y_ << std::endl;
 		this->update();
 	}
 }
 
-void OpenGlWindow::searchClosedPoint(const Point click, const std::vector<std::vector<Point>>& points, Point& p) const
+void OpenGlWindow::searchClosedPoint(const Point click, std::vector<std::vector<Point>>& points)
 {
 	for (int i = 0; i < points.size(); i++)
 	{
 		for (int j = 0; j < points[i].size(); j++)
 		{
-			p = points[i][j];
-			if (click.isCloseTo(p, 0.05)){
+			Point *	p = &(points[i][j]);
+			if (click.isCloseTo(*p, 0.05)){	
+				_movingPointPtr = p;
 				return;
 			}
 		}
