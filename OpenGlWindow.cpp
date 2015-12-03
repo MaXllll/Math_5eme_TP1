@@ -387,7 +387,7 @@ bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2)
 	float radius1;
 	circumCenter(t1._e1, t1._e2, center1, radius1);
 
-	vertexGrid[0] = center1;
+	//vertexGrid[0] = center1;
 
 	if (length(center1, tPoints[3]._coords) < radius1)
 		return false;
