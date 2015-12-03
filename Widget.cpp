@@ -6,7 +6,7 @@
 OpenGlWindow* glWindow;
 
 // Window dimensions
-const GLuint WIDTH = 1200, HEIGHT = 800;
+const GLuint WIDTH = 800, HEIGHT = 800;
 
 Widget::Widget(Model* modelP)
 {

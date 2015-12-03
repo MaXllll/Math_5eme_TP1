@@ -377,19 +377,16 @@ void OpenGlWindow::findTrianglePoints(const Triangle& t1, const Triangle& t2, st
 
 }
 
-bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2)
+bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2) const
 {
 	std::vector<Vertex> tPoints = std::vector<Vertex>();
 
 	findTrianglePoints(t1, t2, tPoints);
 
-	Point center1;
-	float radius1;
-	circumCenter(t1._e1, t1._e2, center1, radius1);
+	Circle c1 = Circle();
+	c1.CalculateCircle(tPoints[0]._coords, tPoints[1]._coords, tPoints[2]._coords);
 
-	//vertexGrid[0] = center1;
-
-	if (length(center1, tPoints[3]._coords) < radius1)
+	if (length(c1._center, tPoints[3]._coords) < c1._radius)
 		return false;
 	else
 		return true;
@@ -577,57 +574,9 @@ void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 	}
 }	
 
-CVector normal(const Point& p1, const Point& p2)
-{
-
-	float dX1 = p2.x_ - p1.x_;
-	float dY1 = p2.y_ - p1.y_;
-
-	//We chosse one normal
-	return CVector(-dY1, dX1);
-}
-
-void OpenGlWindow::circumCenter(const Edge& e1, const Edge& e2, Point& center, float radius)
-{
-	Point p1 = e1._v1._coords;
-	Point p2 = e1._v2._coords;
-
-	CVector n1 = normal(p1, p2);
-
-	Point p3 = e2._v1._coords;
-	Point p4 = e2._v2._coords;
-
-	CVector n2 = normal(p3, p4);
-
-	Point bissec1P1 = Point((p1.x_ + p2.x_) / 2.0f, (p1.y_ + p2.y_) / 2.0f);
-	Point bissec1P2 = Point(bissec1P1.x_ + n1.x, bissec1P1.y_ + n1.y);
-
-	Point bissec2P1 = Point((p3.x_ + p4.x_) / 2.0f, (p3.y_ + p4.y_) / 2.0f);
-	Point bissec2P2 = Point(bissec2P1.x_ + n2.x, bissec2P1.y_ + n2.y);
-
-	//_centers.push_back(bissec1P1);
-	//_indexCenters.push_back(_centers.size() - 1);
-
-	//_centers.push_back(bissec1P2);
-	//_indexCenters.push_back(_centers.size() - 1);
-
-	//_centers.push_back(bissec2P1);
-	//_indexCenters.push_back(_centers.size() - 1);
-
-	//_centers.push_back(bissec2P2);
-	//_indexCenters.push_back(_centers.size() - 1);
-
-	intersection(bissec1P1, bissec1P2, bissec2P1, bissec2P2, center);
-	radius = length(center, p1);
-
-
-}
-
-
 #pragma endregion
 
 #pragma region Voronoi
-
 void OpenGlWindow::voronoi()
 {
 	Triangulation(true);
@@ -652,32 +601,30 @@ void OpenGlWindow::voronoi()
 
 		Triangle t1 = it->second[0];
 		Triangle t2 = it->second[1];
-		Point center1;
-		float radius1;
-		Point center2;
-		float radius2;
 
-		circumCenter(t1._e1, t1._e2, center1, radius1);
-		circumCenter(t2._e1, t2._e2, center2, radius2);
+		Circle c1 = Circle();
+		Circle c2 = Circle();
+		c1.CalculateCircle(t1._e1._v1._coords, t1._e1._v2._coords, t1._e2._v2._coords);
+		c2.CalculateCircle(t2._e1._v1._coords, t2._e1._v2._coords, t2._e2._v2._coords);
 
-		auto itFind1 = std::find(_centers.begin(), _centers.end(), center1);
+		auto itFind1 = std::find(_centers.begin(), _centers.end(), c1._center);
 
 		if (itFind1 == _centers.end())
 		{
 			_indexCenters.push_back(_centers.size());
-			_centers.push_back(center1);
+			_centers.push_back(c1._center);
 		}
 		else
 		{
 			_indexCenters.push_back(itFind1 - _centers.begin());
 		}
 
-		auto itFind2 = std::find(_centers.begin(), _centers.end(), center2);
+		auto itFind2 = std::find(_centers.begin(), _centers.end(), c2._center);
 
 		if (itFind2 == _centers.end())
 		{
 			_indexCenters.push_back(_centers.size());
-			_centers.push_back(center2);
+			_centers.push_back(c2._center);
 		}
 		else
 		{

@@ -62,7 +62,7 @@ private:
 
 	std::map<Edge, std::vector<Triangle>> _edgeToTriangle = std::map<Edge, std::vector<Triangle>>();
 
-	bool isDelaunay(Triangle t1, Triangle t2);
+	bool isDelaunay(Triangle t1, Triangle t2) const;
 	void CalculateCircle(Point p1, Point p2, Point p3);
 	void AddTriangleNew(Vertex v1, Vertex v2, Point p, int newIndex);
 	Point interiorPoint(Edge currentEdge) const;
@@ -70,7 +70,6 @@ private:
 	void findTrianglePoints(const Triangle& t1, const Triangle& t2, std::vector<Vertex>& outVec) const;
 	void AddTriangle(Vertex v1, Vertex v2, Vertex v3);
 	void feedIndexGrid();
-	void circumCenter(const Edge& e1, const Edge& e2, Point& center, float radius);
 
 	int pointIndex = 0;
 
