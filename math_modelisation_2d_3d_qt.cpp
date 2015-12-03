@@ -79,7 +79,7 @@ void Math_modelisation_2D_3D_QT::Triangulation()
 void Math_modelisation_2D_3D_QT::Flipping()
 {
 	model.mode = model.FLIPPING,
-	mainWidget->Triangulation(true);
+	//mainWidget->Triangulation(true);
 	mainWidget->repaint();
 }
 
@@ -87,7 +87,7 @@ void Math_modelisation_2D_3D_QT::Flipping()
 void Math_modelisation_2D_3D_QT::Voronoi()
 {
 	model.mode = model.VORONOI,
-	mainWidget->Voronoi();
+	//mainWidget->Voronoi();
 	mainWidget->repaint();
 }
 

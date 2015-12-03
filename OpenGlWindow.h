@@ -61,7 +61,7 @@ private:
 
 	std::map<Edge, std::vector<Triangle>> _edgeToTriangle = std::map<Edge, std::vector<Triangle>>();
 
-	bool isDelaunay(Triangle t1, Triangle t2) const;
+	bool isDelaunay(Triangle t1, Triangle t2);
 	void CalculateCircle(Point p1, Point p2, Point p3);
 	void AddTriangleNew(Vertex v1, Vertex v2, Point p, int newIndex);
 	Point interiorPoint(Edge currentEdge) const;
@@ -69,6 +69,7 @@ private:
 	void findTrianglePoints(const Triangle& t1, const Triangle& t2, std::vector<Vertex>& outVec) const;
 	void AddTriangle(Vertex v1, Vertex v2, Vertex v3);
 	void feedIndexGrid();
+	void circumCenter(const Edge& e1, const Edge& e2, Point& center, float radius);
 
 	int pointIndex = 0;
 
@@ -83,6 +84,7 @@ private:
 	void paintGrid();
 	void paintVoronoi();
 
+
 	//Utils
 	void searchClosedPoint(const Point click, const std::vector<std::vector<Point>>& points, Point& p) const;
 	void convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF, const glm::vec3 color) const;
@@ -90,7 +92,7 @@ private:
 	void printVector(const std::vector<Point>& points) const;
 	void paintLines(std::vector<float>& pointsF) const;
 	void AddBaryCenter(std::vector<float>& pointsF) const;
-
-
+	bool intersection(const Point& a, const Point& b, const Point& c, const Point& d, Point& intersec) const;
+	float determinant(float matrix[2][2]) const;
 };
 

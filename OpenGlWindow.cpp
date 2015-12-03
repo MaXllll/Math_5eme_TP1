@@ -375,16 +375,19 @@ void OpenGlWindow::findTrianglePoints(const Triangle& t1, const Triangle& t2, st
 
 }
 
-bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2) const
+bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2)
 {
 	std::vector<Vertex> tPoints = std::vector<Vertex>();
 
 	findTrianglePoints(t1, t2, tPoints);
 
-	Circle c1 = Circle();
-	c1.CalculateCircle(tPoints[0]._coords, tPoints[1]._coords, tPoints[2]._coords);
+	Point center1;
+	float radius1;
+	circumCenter(t1._e1, t1._e2, center1, radius1);
 
-	if (length(c1._center, tPoints[3]._coords) < c1._radius)
+	vertexGrid[0] = center1;
+
+	if (length(center1, tPoints[3]._coords) < radius1)
 		return false;
 	else
 		return true;
@@ -572,6 +575,52 @@ void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 	}
 }	
 
+CVector normal(const Point& p1, const Point& p2)
+{
+
+	float dX1 = p2.x_ - p1.x_;
+	float dY1 = p2.y_ - p1.y_;
+
+	//We chosse one normal
+	return CVector(-dY1, dX1);
+}
+
+void OpenGlWindow::circumCenter(const Edge& e1, const Edge& e2, Point& center, float radius)
+{
+	Point p1 = e1._v1._coords;
+	Point p2 = e1._v2._coords;
+
+	CVector n1 = normal(p1, p2);
+
+	Point p3 = e2._v1._coords;
+	Point p4 = e2._v2._coords;
+
+	CVector n2 = normal(p3, p4);
+
+	Point bissec1P1 = Point((p1.x_ + p2.x_) / 2.0f, (p1.y_ + p2.y_) / 2.0f);
+	Point bissec1P2 = Point(bissec1P1.x_ + n1.x, bissec1P1.y_ + n1.y);
+
+	Point bissec2P1 = Point((p3.x_ + p4.x_) / 2.0f, (p3.y_ + p4.y_) / 2.0f);
+	Point bissec2P2 = Point(bissec2P1.x_ + n2.x, bissec2P1.y_ + n2.y);
+
+	//_centers.push_back(bissec1P1);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	//_centers.push_back(bissec1P2);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	//_centers.push_back(bissec2P1);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	//_centers.push_back(bissec2P2);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	intersection(bissec1P1, bissec1P2, bissec2P1, bissec2P2, center);
+	radius = length(center, p1);
+
+
+}
+
 
 #pragma endregion
 
@@ -601,30 +650,32 @@ void OpenGlWindow::voronoi()
 
 		Triangle t1 = it->second[0];
 		Triangle t2 = it->second[1];
+		Point center1;
+		float radius1;
+		Point center2;
+		float radius2;
 
-		Circle c1 = Circle();
-		Circle c2 = Circle();
-		c1.CalculateCircle(t1._e1._v1._coords, t1._e1._v2._coords, t1._e2._v2._coords);
-		c2.CalculateCircle(t2._e1._v1._coords, t2._e1._v2._coords, t2._e2._v2._coords);
+		circumCenter(t1._e1, t1._e2, center1, radius1);
+		circumCenter(t2._e1, t2._e2, center2, radius2);
 
-		auto itFind1 =std::find(_centers.begin(), _centers.end(), c1._center);
+		auto itFind1 = std::find(_centers.begin(), _centers.end(), center1);
 
 		if (itFind1 == _centers.end())
 		{
 			_indexCenters.push_back(_centers.size());
-			_centers.push_back(c1._center);
+			_centers.push_back(center1);
 		}
 		else
 		{
 			_indexCenters.push_back(itFind1 - _centers.begin());
 		}
 
-		auto itFind2 = std::find(_centers.begin(), _centers.end(), c2._center);
+		auto itFind2 = std::find(_centers.begin(), _centers.end(), center2);
 
 		if (itFind2 == _centers.end())
 		{
 			_indexCenters.push_back(_centers.size());
-			_centers.push_back(c2._center);
+			_centers.push_back(center2);
 		}
 		else
 		{
@@ -831,6 +882,7 @@ void OpenGlWindow::JarvisMarch()
 #pragma endregion
 
 #pragma region Utils
+
 double convertViewportToOpenGLCoordinate(double x)
 {
 	return (x * 2) - 1;
@@ -899,6 +951,112 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 		pointsF.push_back(color.y);
 		pointsF.push_back(color.z);
 	}
+}
+
+
+//void OpenGlWindow::intersection(const Point& a, const Point& b, const Point& c, const Point& d, Point& intersec) const
+//{
+//	//matrice 1, matrice inverse.
+//	float matrixA[2][2];
+//	float matrixAReverse[2][2];
+//	float matrixRes[2];
+//	float matrixB[2];
+//	float det;
+//
+//	float x1 = a.x_get();
+//	float x2 = b.x_get();
+//	float x3 = c.x_get();
+//	float x4 = d.x_get();
+//
+//	float y1 = a.y_get();
+//	float y2 = b.y_get();
+//	float y3 = c.y_get();
+//	float y4 = d.y_get();
+//
+//	matrixA[0][0] = (x2 - x1);
+//	matrixA[0][1] = (x3 - x4);
+//	matrixA[1][0] = (y2 - y1);
+//	matrixA[1][1] = (y3 - y4);
+//
+//	matrixB[0] = (c.x_get() - a.x_get());
+//	matrixB[1] = (c.y_get() - a.y_get());
+//
+//	det = determinant(matrixA);
+//
+//	if (det == 0)
+//		throw 1;
+//
+//	//Res = A-1 * B
+//
+//	//The Matrix A must be reversed
+//	matrixAReverse[0][0] = matrixA[1][1] / det;
+//	matrixAReverse[0][1] = -matrixA[0][1] / det;
+//	matrixAReverse[1][0] = -matrixA[1][0] / det;
+//	matrixAReverse[1][1] = matrixA[0][0] / det;
+//
+//	//Matrix product between reverse A and B matrix
+//	matrixRes[0] = matrixAReverse[0][0] * matrixB[0] + matrixAReverse[0][1] * matrixB[1];
+//	matrixRes[1] = matrixAReverse[1][0] * matrixB[0] + matrixAReverse[1][1] * matrixB[1];
+//
+//	//The intersection is outise of the polygon current line segment
+//	//if (matrixRes[0] > 1 || matrixRes[0] < 0)
+//	//	throw 2;
+//
+//	//Calculate the intersection point
+//	intersec.x_set(((1 - matrixRes[0]) * x1) + (matrixRes[0] * x2));
+//	intersec.y_set(((1 - matrixRes[0]) * y1) + (matrixRes[0] * y2));
+//
+//}
+
+
+bool OpenGlWindow::intersection(const Point& sA, const Point& sB, const Point& dA, const Point& dB, Point& inter) const
+{
+	// Equation paramétrique d'une droite à partir de deux points
+	// P(t) = sA + (sB - sA)t
+	// Q(s) = dA + (dB - dA)s
+	// ^ * X = b 
+
+	// Définition de la matrice 2x2 -> ^
+	float matrix[2][2];
+	matrix[0][0] = sB.x_ - sA.x_;
+	matrix[0][1] = dA.x_ - dB.x_;
+	matrix[1][0] = sB.y_ - sA.y_;
+	matrix[1][1] = dA.y_ - dB.y_;
+
+	// Calcul du déterminant
+	float determinant = (sB.x_ - sA.x_) * (dA.y_ - dB.y_) - (sB.y_ - sA.y_) * (dA.x_ - dB.x_);
+
+	// On quitte si le déterminant est nul
+	if (determinant == 0.0f)
+		return false;
+
+	// On calcul l'inverse de la matrice -> ^-1
+	float invmatrix[2][2];
+	invmatrix[0][0] = matrix[1][1] * (1 / determinant);
+	invmatrix[0][1] = -matrix[0][1] * (1 / determinant);
+	invmatrix[1][0] = -matrix[1][0] * (1 / determinant);
+	invmatrix[1][1] = matrix[0][0] * (1 / determinant);
+
+	// Définition du b
+	float bMatrix[2];
+	bMatrix[0] = dA.x_ - sA.x_;
+	bMatrix[1] = dA.y_ - sA.y_;
+
+	// Résultat de la multiplication -> ^-1 * b
+	float X[2];
+	// correspond à t
+	X[0] = invmatrix[0][0] * bMatrix[0] + invmatrix[0][1] * bMatrix[1];
+
+	// correspond à s
+	X[1] = invmatrix[1][0] * bMatrix[0] + invmatrix[1][1] * bMatrix[1];
+
+	inter = sA + (sB - sA) * X[0];
+	return true;
+}
+
+float OpenGlWindow::determinant(float matrix[2][2]) const
+{
+	return (matrix[0][0] * matrix[1][1]) - (matrix[0][1] * matrix[1][0]);
 }
 
 void OpenGlWindow::printVector(const std::vector<Point>& points) const

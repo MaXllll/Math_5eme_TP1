@@ -80,6 +80,21 @@ std::ostream& operator<<(std::ostream& out, const Point &p)
     return out;
 }
 
+Point Point::operator + (const Point p) const
+{
+	return Point(this->x_ + p.x_, this->y_ + p.y_);
+}
+
+Point Point::operator - (const Point p) const
+{
+	return Point(this->x_ - p.x_, this->y_ - p.y_);
+}
+
+Point Point::operator*(float f) const
+{
+	return Point(x_ * f, y_ * f);
+}
+
 /*
 float Point::angleWith(Point p){
 	
