@@ -13,6 +13,9 @@
 
 class CVector
 {
+public:
+	float x;
+	float y;
     
 private:
     Point p1;
@@ -22,6 +25,7 @@ public:
     /* Constructor and Destructor*/
     CVector();
     CVector(const Point &p1,const Point &p2);
+	CVector(float x, float y);
     CVector(const CVector &c);
     ~CVector(void);
     
@@ -37,6 +41,7 @@ public:
     CVector normal() const;
 	float norm() const;
 	float dotProduct(CVector vec) const;
+	float dotProductMag(CVector vec) const;
 	float angle(CVector vec) const;
 	float crossProduct(CVector v2) const;
 };

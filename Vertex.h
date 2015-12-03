@@ -1,18 +1,24 @@
 #pragma once
+#include "Point.h"
 
-class Edge;
-class Point;
 class Vertex
 {
 
 public:
 	
-	Point* _coords;
-	Edge* _edge;
+	Point _coords;
+	//Edge* _edge;
+	int _index;
 
 	Vertex();
-	Vertex(const Point coords, const Edge edge);
+	Vertex(const Vertex& v);
+	Vertex(const Point coords);
+	//Vertex(const Point coords, const Edge edge);
 	~Vertex();
 
+	//Vertex& operator=(const Vertex& v);
+
+	bool operator==(const Vertex& e) const;
+	bool operator!=(const Vertex& e) const;
 };
 

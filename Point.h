@@ -39,11 +39,11 @@ public:
 	void y_set(float y);
 
 	bool operator==(const Point p) const;
-	bool operator!=(const Point p) const;
 	bool operator<(const Point p) const;
+	Point operator+(const Point p) const;
+	Point operator-(const Point p) const;
 
-
-    
+	Point operator*(float f) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Point &p);

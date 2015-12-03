@@ -57,9 +57,14 @@ void Widget::JarvisMarch()
 }
 
 
-void Widget::Triangulation()
+void Widget::Triangulation(bool flipping)
 {
-	glWindow->Triangulation();
+	glWindow->Triangulation(flipping);
+}
+
+void Widget::Voronoi()
+{
+	glWindow->voronoi();
 }
 
 void Widget::NewCluster()

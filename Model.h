@@ -13,6 +13,8 @@ struct Model
 		JARVIS,
 		GRAHAMSCAN,
 		TRIANGULATION,
+		FLIPPING,
+		VORONOI
 	};
 
 	bool wireFrame = true;

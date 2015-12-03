@@ -18,10 +18,13 @@
 #include "Point.h"
 #include <math.h>
 #include "CVector.h"
+#include <functional>
 
 //Qt
 #include <QtWidgets\qapplication.h>
 #include <qdebug.h>
+
+#include "Circle.h"
 
 #define PI 3.14159265
 
@@ -127,10 +130,8 @@ void OpenGlWindow::paintGL()
 	// Activate shader
 	//basicShader.Bind();
 
-	//lines
+
 	std::vector<float> pointsF = std::vector<float>();
-	//points
-	std::vector<float> pointsC = std::vector<float>();
 	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS)
 	{
 
@@ -138,14 +139,14 @@ void OpenGlWindow::paintGL()
 
 		if (model->mode == model->GRAHAMSCAN){
 			GrahamScan();
-			AddBaryCenter(pointsC);
+			AddBaryCenter(pointsF);
 		}
 		else{
 			JarvisMarch();
 		}
-		
+
 		bool pointDrawing;
-		
+
 		// Si la structure de points apres algo est vide, alors on affiche les points cliqués en brut
 		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
 			for (int i = 0; i < _points.size(); i++)
@@ -165,49 +166,345 @@ void OpenGlWindow::paintGL()
 
 			for (int i = 0; i < _points.size(); i++)
 			{
+				std::vector<float> pointsC = std::vector<float>();
 				convertPointToFloat(_points[i], pointsC, pointColor2);
 				paintPoints(pointsC);
 			}
 		}
 		grahanScanShader.Unbind();
 	}
-	else if (model->mode == model->TRIANGULATION)
+	else if (model->mode == model->TRIANGULATION || model->mode == model->FLIPPING)
 	{
 
-		for (int i = 0; i < _points.size(); i++)
-		{
-			convertPointToFloat(_points[i], pointsF, pointColor);
+		//for (int i = 0; i < _points.size(); i++)
+		//{
+			Triangulation(model->mode == model->FLIPPING);
+
+			//convertPointToFloat(_points[i], pointsF, pointColor);
 
 			//paintPoints(pointsF);
 
 			//paintLines(pointsF);
 			paintGrid();
-		}
+		//}
+	}
+	else if (model->mode == model->VORONOI)
+	{
+		grahanScanShader.Bind();
+
+		voronoi();
+
+		paintGrid();
+		paintVoronoi();
+
+		grahanScanShader.Unbind();
 	}
 
 }
 
 #pragma region Triangulation
 
-void OpenGlWindow::Triangulation()
+void OpenGlWindow::Triangulation(bool flipping)
 {
+	_triangles.clear();
+	_edges.clear();
+	_vertex.clear();
+	indexGrid.clear();
+	_trianglesIndex.clear();
+	_edgeToTriangle.clear();
+	pointIndex = 0;
+
+	if (_points[_currentCluster].size() < 3)
+		return;
+
 	vertexGrid = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
 	std::sort(vertexGrid.begin(), vertexGrid.end());
-	
-	//Base 2-triangulation
-	indexGrid.push_back(0);
-	indexGrid.push_back(1);
-	indexGrid.push_back(2);
 
-	indexGrid.push_back(0);
-	indexGrid.push_back(2);
-	indexGrid.push_back(3);
+	Vertex v1 = Vertex(vertexGrid[0]);
+	Vertex v2 = Vertex(vertexGrid[1]);
+	v1._index = pointIndex++;
+	v2._index = pointIndex++;
 
+	AddTriangleNew(v1, v2, vertexGrid[2], pointIndex++);
+
+
+	if (vertexGrid.size() < 4)
+		return;
+
+	std::vector <std::function<void()>> jobs;
+
+	for (int i = 3; i < vertexGrid.size(); i++)
+	{
+		Point newPoint = vertexGrid[i];
+
+		for (int j = 0; j < _edges.size(); j++)
+		{
+			auto edge = _edges[j];
+
+			//If it's an iterior edge, we can skip
+			auto it = _edgeToTriangle.find(edge);
+			if (it != _edgeToTriangle.end())
+			{
+				if (it->second.size() >= 2)
+					continue;
+			}
+			else
+			{
+				continue;
+			}
+
+			//We need to choose an point that doesn't belong to the current edge 
+			Point interiorP = interiorPoint(edge);
+			CVector normalI = interiorNormal(edge, interiorP);
+			CVector newEdge = CVector(edge._v1._coords, newPoint);
+
+			float dotResult = normalI.dotProductMag(newEdge);
+			bool visible = dotResult < 0;
+
+			if (visible)
+			{
+				std::function<void()> fct = std::bind(&OpenGlWindow::AddTriangleNew, this, edge._v1, edge._v2, newPoint, pointIndex);
+				jobs.push_back(fct);
+
+				//AddTriangle(edge._v1, edge._v2, newPoint, pointIndex++);
+			}
+		}
+
+		for each(auto fct in jobs)
+		{
+			fct();
+		}
+
+		pointIndex++;
+		jobs.clear();
+	}
+
+	if (!flipping)
+		return;
+
+	//Flipping Edge
+	for (int j = 0; j < _edges.size(); j++)
+	{
+		auto edge = _edges[j];
+
+		//If it's an exterior edge, we can skip
+		auto it = _edgeToTriangle.find(edge);
+		if (it != _edgeToTriangle.end())
+		{
+			if (it->second.size() == 1)
+				continue;
+		}
+		else
+		{
+			continue;
+		}
+
+		bool toBeFlipped = !isDelaunay(it->second[0], it->second[1]);
+		if (toBeFlipped)
+		{
+			std::vector<Vertex> tPoints = std::vector<Vertex>();
+			Triangle t1 = it->second[0];
+			Triangle t2 = it->second[1];
+
+			findTrianglePoints(t1, t2, tPoints);
+
+			_edges.erase(std::find(_edges.begin(), _edges.end(), edge));
+			_edgeToTriangle.erase(_edgeToTriangle.find(edge));
+			_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1));
+			_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t2));
+			_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t1));
+			_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t2));
+
+			std::vector<Edge> tEdges = std::vector<Edge>();
+			tEdges.push_back(t1._e1);
+			tEdges.push_back(t1._e2);
+			tEdges.push_back(t1._e3);
+			tEdges.push_back(t2._e1);
+			tEdges.push_back(t2._e2);
+			tEdges.push_back(t2._e3);
+
+			for (size_t i = 0; i < tEdges.size(); i++)
+			{
+				auto edgeC = tEdges[i];
+				if (edgeC != edge)
+				{
+					auto itC = _edgeToTriangle.find(edgeC);
+					if (itC->second[0] == t1 || itC->second[0] == t2){
+						itC->second.erase(itC->second.begin());
+						continue;
+					}
+					if (itC->second.size() > 0 && itC->second[1] == t1 || itC->second[1] == t2)
+						itC->second.erase(itC->second.begin() + 1);
+
+				}
+			}
+			
+			tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v1));
+			tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v2));
+
+			AddTriangle(edge._v1, tPoints[0], tPoints[1]);
+			AddTriangle(edge._v2, tPoints[0], tPoints[1]);
+
+		}
+
+	}
+
+
+}
+
+float length(Point p1, Point p2)
+{
+	return sqrt((p1.x_ - p2.x_) * (p1.x_ - p2.x_) + (p1.y_ - p2.y_) * (p1.y_ - p2.y_));
+}
+
+void OpenGlWindow::findTrianglePoints(const Triangle& t1, const Triangle& t2, std::vector<Vertex>& outVec) const
+{
+	outVec.push_back(t1._e1._v1);
+	outVec.push_back(t1._e1._v2);
+	outVec.push_back(t1._e2._v2);
+
+	if (std::find(outVec.begin(), outVec.end(), t2._e1._v1) == outVec.end())
+		outVec.push_back(t2._e1._v1);
+
+	if (std::find(outVec.begin(), outVec.end(), t2._e1._v2) == outVec.end())
+		outVec.push_back(t2._e1._v2);
+
+	if (std::find(outVec.begin(), outVec.end(), t2._e2._v2) == outVec.end())
+		outVec.push_back(t2._e2._v2);
+
+}
+
+bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2)
+{
+	std::vector<Vertex> tPoints = std::vector<Vertex>();
+
+	findTrianglePoints(t1, t2, tPoints);
+
+	Point center1;
+	float radius1;
+	circumCenter(t1._e1, t1._e2, center1, radius1);
+
+	vertexGrid[0] = center1;
+
+	if (length(center1, tPoints[3]._coords) < radius1)
+		return false;
+	else
+		return true;
+}
+
+void OpenGlWindow::AddTriangleNew(Vertex v1, Vertex v2, Point p, int newIndex)
+{
+	Vertex v3 = Vertex(p);
+	v3._index = newIndex;
+
+	AddTriangle(v1, v2, v3);
+}
+
+void OpenGlWindow::AddTriangle(Vertex v1, Vertex v2, Vertex v3)
+{
+	Edge e1 = Edge(v1, v2);
+	Edge e2 = Edge(v2, v3);
+	Edge e3 = Edge(v3, v1);
+
+	Triangle t = Triangle(e1, e2, e3, v1._index, v2._index, v3._index);
+
+	_vertex.push_back(v1);
+	_vertex.push_back(v2);
+	_vertex.push_back(v2);
+
+	if (std::find(_edges.begin(), _edges.end(), e1) == _edges.end())
+		_edges.push_back(e1);
+	if (std::find(_edges.begin(), _edges.end(), e2) == _edges.end())
+		_edges.push_back(e2);
+	if (std::find(_edges.begin(), _edges.end(), e3) == _edges.end())
+		_edges.push_back(e3);
+
+	_triangles.push_back(t);
+
+	_trianglesIndex.push_back(t);
+
+	std::vector<Triangle> vect1 = std::vector<Triangle>();
+	vect1.push_back(t);
+
+	auto it = _edgeToTriangle.find(e1);
+	if (it != _edgeToTriangle.end())
+		it->second.push_back(t);
+	else
+		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e1, vect1));
+
+	it = _edgeToTriangle.find(e2);
+	if (it != _edgeToTriangle.end())
+		it->second.push_back(t);
+	else
+	{
+		std::vector<Triangle> vect2 = std::vector<Triangle>(vect1);
+		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e2, vect2));
+	}
+
+	it = _edgeToTriangle.find(e3);
+	if (it != _edgeToTriangle.end())
+		it->second.push_back(t);
+	else
+	{
+		std::vector<Triangle> vect3 = std::vector<Triangle>(vect1);
+		_edgeToTriangle.insert(std::pair<Edge, std::vector<Triangle>>(e3, vect3));
+	}
+}
+
+Point OpenGlWindow::interiorPoint(Edge _currentEdge) const
+{
+	for (int j = 0; j < _edges.size(); j++)
+	{
+		auto edge = _edges[j];
+
+		Vertex v1 = edge._v1;
+		Vertex v2 = edge._v2;
+
+		if (v1 != _currentEdge._v1 && v1 != _currentEdge._v2)
+			return v1._coords;
+		if (v2 != _currentEdge._v1 && v2 != _currentEdge._v2)
+			return v2._coords;
+	}
+}
+
+CVector OpenGlWindow::interiorNormal(const Edge& edge, const Point& point)  const
+{
+	Point p1 = edge._v1._coords;
+	Point p2 = edge._v2._coords;
+
+	float dX = p2.x_ - p1.x_;
+	float dY = p2.y_ - p1.y_;
+
+	//We chosse one normal
+	CVector normal = CVector(-dY, dX);
+
+	//We construct a vector using one point of the edge and another point from de structure
+	CVector intVec = CVector(p1, point);
+
+	//Is the normal the interior one?
+	float result = normal.dotProductMag(intVec);
+
+	if (result > 0)
+		return normal;
+	else
+		return CVector(dY, -dX);
 }
 
 void OpenGlWindow::clearCurrentPointAA(){
 	_pointsAA[_currentCluster] = std::vector<Point>();
+}
+
+void OpenGlWindow::feedIndexGrid()
+{
+	for (size_t i = 0; i < _trianglesIndex.size(); i++)
+	{
+		auto t = _trianglesIndex[i];
+
+		indexGrid.push_back(t._index1);
+		indexGrid.push_back(t._index2);
+		indexGrid.push_back(t._index3);
+	}
 }
 
 void OpenGlWindow::paintGrid()
@@ -217,6 +514,7 @@ void OpenGlWindow::paintGrid()
 	std::vector<float> vertexF = std::vector<float>();
 
 	convertPointToFloat(vertexGrid, vertexF, lineColor);
+	feedIndexGrid();
 
 	GLuint VBO, VAO, EBO;
 	glGenVertexArrays(1, &VAO);
@@ -275,8 +573,158 @@ void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 
 		glBindVertexArray(0);
 	}
+}	
+
+CVector normal(const Point& p1, const Point& p2)
+{
+
+	float dX1 = p2.x_ - p1.x_;
+	float dY1 = p2.y_ - p1.y_;
+
+	//We chosse one normal
+	return CVector(-dY1, dX1);
 }
 
+void OpenGlWindow::circumCenter(const Edge& e1, const Edge& e2, Point& center, float radius)
+{
+	Point p1 = e1._v1._coords;
+	Point p2 = e1._v2._coords;
+
+	CVector n1 = normal(p1, p2);
+
+	Point p3 = e2._v1._coords;
+	Point p4 = e2._v2._coords;
+
+	CVector n2 = normal(p3, p4);
+
+	Point bissec1P1 = Point((p1.x_ + p2.x_) / 2.0f, (p1.y_ + p2.y_) / 2.0f);
+	Point bissec1P2 = Point(bissec1P1.x_ + n1.x, bissec1P1.y_ + n1.y);
+
+	Point bissec2P1 = Point((p3.x_ + p4.x_) / 2.0f, (p3.y_ + p4.y_) / 2.0f);
+	Point bissec2P2 = Point(bissec2P1.x_ + n2.x, bissec2P1.y_ + n2.y);
+
+	//_centers.push_back(bissec1P1);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	//_centers.push_back(bissec1P2);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	//_centers.push_back(bissec2P1);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	//_centers.push_back(bissec2P2);
+	//_indexCenters.push_back(_centers.size() - 1);
+
+	intersection(bissec1P1, bissec1P2, bissec2P1, bissec2P2, center);
+	radius = length(center, p1);
+
+
+}
+
+
+#pragma endregion
+
+#pragma region Voronoi
+
+void OpenGlWindow::voronoi()
+{
+	Triangulation(true);
+	_centers.clear();
+	_indexCenters.clear();
+
+	for (int j = 0; j < _edges.size(); j++)
+	{
+		auto edge = _edges[j];
+
+		//If it's an exterior edge, we can skip
+		auto it = _edgeToTriangle.find(edge);
+		if (it != _edgeToTriangle.end())
+		{
+			if (it->second.size() == 1)
+				continue;
+		}
+		else
+		{
+			continue;
+		}
+
+		Triangle t1 = it->second[0];
+		Triangle t2 = it->second[1];
+		Point center1;
+		float radius1;
+		Point center2;
+		float radius2;
+
+		circumCenter(t1._e1, t1._e2, center1, radius1);
+		circumCenter(t2._e1, t2._e2, center2, radius2);
+
+		auto itFind1 = std::find(_centers.begin(), _centers.end(), center1);
+
+		if (itFind1 == _centers.end())
+		{
+			_indexCenters.push_back(_centers.size());
+			_centers.push_back(center1);
+		}
+		else
+		{
+			_indexCenters.push_back(itFind1 - _centers.begin());
+		}
+
+		auto itFind2 = std::find(_centers.begin(), _centers.end(), center2);
+
+		if (itFind2 == _centers.end())
+		{
+			_indexCenters.push_back(_centers.size());
+			_centers.push_back(center2);
+		}
+		else
+		{
+			_indexCenters.push_back(itFind2 - _centers.begin());
+		}
+
+	}
+}
+
+void OpenGlWindow::paintVoronoi()
+{
+	GLuint VBO, VAO, EBO;
+	
+	std::vector<float> centersVertex = std::vector<float>();
+
+
+	convertPointToFloat(_centers, centersVertex, voronoiColor);
+
+	if (centersVertex.size() == 0)
+		return;
+	//pointsF.erase(pointsF.begin());
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, centersVertex.size() * sizeof(float), &centersVertex.front(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indexCenters.size() * sizeof(float), &_indexCenters.front(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	// Color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+
+	glBindVertexArray(VAO);	
+
+	glDrawElements(GL_LINES, _indexCenters.size(), GL_UNSIGNED_INT, 0);
+	//glDrawArrays(GL_POINTS, 0, centersVertex.size() / 6);
+	//glDrawArrays(GL_LINES, 0, pointsF.size() / 6);
+
+	glBindVertexArray(0);
+}
 
 #pragma endregion
 
@@ -284,12 +732,13 @@ void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 
 void OpenGlWindow::GrahamScan()
 {
-	if (_points.size() == 0 || _points[_currentCluster].size() < 3){
+	if (_points.size() == 0 || _points[_currentCluster].size() < 2){
 		if (_pointsAA.size() < _points.size()){
 			_pointsAA.push_back(std::vector<Point>());
 		}
 		return;
 	}
+
 
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
@@ -308,14 +757,14 @@ void OpenGlWindow::GrahamScan()
 		// vector BPj+1
 		CVector currentVec2 = CVector(baryCenter, b);
 		// vector Ox
-		CVector v = CVector(Point(0, 0), Point(1.0f,0));
+		CVector v = CVector(Point(0, 0), Point(1.0f, 0));
 		// Easier to debug like this
 		float angle1 = v.angle(currentVec1);
 		float angle2 = v.angle(currentVec2);
 		// We check if we must take the inner or outer angle between the two vectors
-		if (v.crossProduct(currentVec1)<0){
+		if (v.crossProduct(currentVec1) < 0){
 			angle1 = 2 * PI - angle1;
-		} 
+		}
 		if (v.crossProduct(currentVec2) < 0){
 			angle2 = 2 * PI - angle2;
 		}
@@ -323,83 +772,8 @@ void OpenGlWindow::GrahamScan()
 		return angle1 < angle2;
 	});
 
-	//std::cout << " Points triés par angle : " << outPoints.size() << " " << std::endl;
-	//printVector(outPoints);
-	Point sInit = outPoints[0];
-	Point pivot = sInit;
-	int currIndex = 0;
-	bool prevIsLast = true;
-	bool avance = false;
-
-	do{
-		pivot = outPoints[currIndex];
-		Point prev;
-		if (currIndex == 0){
-			prev = outPoints[outPoints.size()-1];
-			prevIsLast = true;
-		}
-		else
-		{
-			prev = outPoints[currIndex - 1];
-			prevIsLast = false;
-		}
-		Point next;
-		if (currIndex == outPoints.size() - 1){
-			next = outPoints[0];
-		}
-		else{
-			next = outPoints[currIndex + 1];
-		}
-
-		CVector prevV = CVector(prev, pivot);
-		CVector nextV = CVector(pivot, next);
-		// pivot != next pour enlever les doublons
-		if (isConvex(prevV,nextV) && pivot != next){
-			pivot = next;
-			avance = true;
-			if (currIndex == outPoints.size() - 1){
-				currIndex = 0;
-			}
-			else{
-				currIndex++;
-			}
-		}
-		else{
-			// if this is the first element, we must update the new first elem
-			sInit = prev;
-			outPoints.erase(outPoints.begin() + currIndex);
-			if (prevIsLast){
-				// last-1 because it will pass in the increment after this line so it will be equal to last in the end
-				// -2 because size if size is 5 then last element index is 4
-				currIndex = outPoints.size() - 1; 
-			}else{
-				currIndex--;
-			}
-			//pivot = outPoints[currIndex];
-			pivot = sInit;
-			avance = false;
-		}
-
-	} while (pivot != sInit || avance == false);
-
-	_pointsAA.at(_currentCluster).clear();
-	//.clear();
-	_pointsAA.insert(_pointsAA.begin() + _currentCluster, outPoints);
-	_pointsAA[_currentCluster].push_back(outPoints[0]);
-	//return outPoints;
-}
-
-bool OpenGlWindow::isConvex(CVector& v, CVector& v2) const{
-	float angle = v.angle(v2);
-	if (v.crossProduct(v2)<0){
-		angle = 2 * PI - angle;
-	}
-	if (angle > PI){
-		return false;
-	}
-	else{
-		return true;
-	}
+	std::cout << " Points triés par angle : " << outPoints.size() << " " << std::endl;
+	printVector(outPoints);
 }
 
 void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const
@@ -445,7 +819,7 @@ void OpenGlWindow::JarvisMarch()
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
 	std::sort(outPoints.begin(), outPoints.end());
-	CVector v = CVector(Point(0,0),Point(0,-1.0f));
+	CVector v = CVector(Point(0, 0), Point(0, -1.0f));
 	std::vector<Point> polyPoints = std::vector<Point>();
 
 	int indexFirst = 0;
@@ -474,7 +848,7 @@ void OpenGlWindow::JarvisMarch()
 			if (j != i){
 				CVector currentVec = CVector(outPoints[i], outPoints[j]);
 				currentAngle = v.angle(currentVec);
-				
+
 				currNorm = currentVec.norm();
 				if (currentAngle < angleMin || (currentAngle == angleMin && distanceMax < currNorm)){
 					angleMin = currentAngle;
@@ -487,9 +861,9 @@ void OpenGlWindow::JarvisMarch()
 		i = inew;
 	} while (indexFirst != i);
 
-	std::cout << " Points cliques : " << outPoints.size() << " "  <<std::endl;
+	std::cout << " Points cliques : " << outPoints.size() << " " << std::endl;
 	printVector(outPoints);
-	std::cout << " Points affiches : "  << polyPoints.size() << " " <<std::endl;
+	std::cout << " Points affiches : " << polyPoints.size() << " " << std::endl;
 	int size = polyPoints.size();
 	printVector(polyPoints);
 	std::cout << "\n" << std::endl;
@@ -502,12 +876,13 @@ void OpenGlWindow::JarvisMarch()
 	_pointsAA[_currentCluster].push_back(polyPoints[0]);
 
 	//else
-		//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
+	//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
 }
 
 #pragma endregion
 
 #pragma region Utils
+
 double convertViewportToOpenGLCoordinate(double x)
 {
 	return (x * 2) - 1;
@@ -515,7 +890,7 @@ double convertViewportToOpenGLCoordinate(double x)
 
 void OpenGlWindow::mousePressEvent(QMouseEvent * event)
 {
-	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS){
+	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS || model->mode == model->TRIANGULATION || model->mode == model->FLIPPING || model->mode == model->VORONOI){
 		Point clickP = Point();
 		clickP.x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
 		clickP.y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
@@ -579,6 +954,111 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 }
 
 
+//void OpenGlWindow::intersection(const Point& a, const Point& b, const Point& c, const Point& d, Point& intersec) const
+//{
+//	//matrice 1, matrice inverse.
+//	float matrixA[2][2];
+//	float matrixAReverse[2][2];
+//	float matrixRes[2];
+//	float matrixB[2];
+//	float det;
+//
+//	float x1 = a.x_get();
+//	float x2 = b.x_get();
+//	float x3 = c.x_get();
+//	float x4 = d.x_get();
+//
+//	float y1 = a.y_get();
+//	float y2 = b.y_get();
+//	float y3 = c.y_get();
+//	float y4 = d.y_get();
+//
+//	matrixA[0][0] = (x2 - x1);
+//	matrixA[0][1] = (x3 - x4);
+//	matrixA[1][0] = (y2 - y1);
+//	matrixA[1][1] = (y3 - y4);
+//
+//	matrixB[0] = (c.x_get() - a.x_get());
+//	matrixB[1] = (c.y_get() - a.y_get());
+//
+//	det = determinant(matrixA);
+//
+//	if (det == 0)
+//		throw 1;
+//
+//	//Res = A-1 * B
+//
+//	//The Matrix A must be reversed
+//	matrixAReverse[0][0] = matrixA[1][1] / det;
+//	matrixAReverse[0][1] = -matrixA[0][1] / det;
+//	matrixAReverse[1][0] = -matrixA[1][0] / det;
+//	matrixAReverse[1][1] = matrixA[0][0] / det;
+//
+//	//Matrix product between reverse A and B matrix
+//	matrixRes[0] = matrixAReverse[0][0] * matrixB[0] + matrixAReverse[0][1] * matrixB[1];
+//	matrixRes[1] = matrixAReverse[1][0] * matrixB[0] + matrixAReverse[1][1] * matrixB[1];
+//
+//	//The intersection is outise of the polygon current line segment
+//	//if (matrixRes[0] > 1 || matrixRes[0] < 0)
+//	//	throw 2;
+//
+//	//Calculate the intersection point
+//	intersec.x_set(((1 - matrixRes[0]) * x1) + (matrixRes[0] * x2));
+//	intersec.y_set(((1 - matrixRes[0]) * y1) + (matrixRes[0] * y2));
+//
+//}
+
+
+bool OpenGlWindow::intersection(const Point& sA, const Point& sB, const Point& dA, const Point& dB, Point& inter) const
+{
+	// Equation paramétrique d'une droite à partir de deux points
+	// P(t) = sA + (sB - sA)t
+	// Q(s) = dA + (dB - dA)s
+	// ^ * X = b 
+
+	// Définition de la matrice 2x2 -> ^
+	float matrix[2][2];
+	matrix[0][0] = sB.x_ - sA.x_;
+	matrix[0][1] = dA.x_ - dB.x_;
+	matrix[1][0] = sB.y_ - sA.y_;
+	matrix[1][1] = dA.y_ - dB.y_;
+
+	// Calcul du déterminant
+	float determinant = (sB.x_ - sA.x_) * (dA.y_ - dB.y_) - (sB.y_ - sA.y_) * (dA.x_ - dB.x_);
+
+	// On quitte si le déterminant est nul
+	if (determinant == 0.0f)
+		return false;
+
+	// On calcul l'inverse de la matrice -> ^-1
+	float invmatrix[2][2];
+	invmatrix[0][0] = matrix[1][1] * (1 / determinant);
+	invmatrix[0][1] = -matrix[0][1] * (1 / determinant);
+	invmatrix[1][0] = -matrix[1][0] * (1 / determinant);
+	invmatrix[1][1] = matrix[0][0] * (1 / determinant);
+
+	// Définition du b
+	float bMatrix[2];
+	bMatrix[0] = dA.x_ - sA.x_;
+	bMatrix[1] = dA.y_ - sA.y_;
+
+	// Résultat de la multiplication -> ^-1 * b
+	float X[2];
+	// correspond à t
+	X[0] = invmatrix[0][0] * bMatrix[0] + invmatrix[0][1] * bMatrix[1];
+
+	// correspond à s
+	X[1] = invmatrix[1][0] * bMatrix[0] + invmatrix[1][1] * bMatrix[1];
+
+	inter = sA + (sB - sA) * X[0];
+	return true;
+}
+
+float OpenGlWindow::determinant(float matrix[2][2]) const
+{
+	return (matrix[0][0] * matrix[1][1]) - (matrix[0][1] * matrix[1][0]);
+}
+
 void OpenGlWindow::printVector(const std::vector<Point>& points) const
 {
 	for each (Point p in points)
@@ -590,7 +1070,7 @@ void OpenGlWindow::printVector(const std::vector<Point>& points) const
 
 void OpenGlWindow::clear()
 {
-	
+
 	//_pointsAA[_currentCluster].clear();
 	_points.clear();
 	_pointsAA.clear();

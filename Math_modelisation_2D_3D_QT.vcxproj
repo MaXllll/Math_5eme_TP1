@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Circle.cpp" />
     <ClCompile Include="customSlider.cpp" />
     <ClCompile Include="CVector.cpp" />
     <ClCompile Include="Edge.cpp" />
@@ -230,6 +231,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Circle.h" />
     <ClInclude Include="CVector.h" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="Model.h" />
