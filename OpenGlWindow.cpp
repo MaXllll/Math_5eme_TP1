@@ -180,14 +180,14 @@ void OpenGlWindow::paintGL()
 
 		//for (int i = 0; i < _points.size(); i++)
 		//{
-			Triangulation(model->mode == model->FLIPPING);
+		Triangulation(model->mode == model->FLIPPING);
 
-			//convertPointToFloat(_points[i], pointsF, pointColor);
+		//convertPointToFloat(_points[i], pointsF, pointColor);
 
-			//paintPoints(pointsF);
+		//paintPoints(pointsF);
 
-			//paintLines(pointsF);
-			paintGrid();
+		//paintLines(pointsF);
+		paintGrid();
 		//}
 	}
 	else if (model->mode == model->VORONOI)
@@ -196,7 +196,8 @@ void OpenGlWindow::paintGL()
 
 		voronoi();
 
-		paintGrid();
+		if (model->wireFrame)
+			paintGrid();
 		paintVoronoi();
 
 		grahanScanShader.Unbind();
@@ -344,7 +345,7 @@ void OpenGlWindow::Triangulation(bool flipping)
 
 				}
 			}
-			
+
 			tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v1));
 			tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v2));
 
@@ -581,11 +582,21 @@ void OpenGlWindow::paintLines(std::vector<float>& pointsF) const
 
 		glBindVertexArray(0);
 	}
-}	
+}
 
 #pragma endregion
 
 #pragma region Voronoi
+
+CVector normal(const Point& p1, const Point& p2)
+{
+	float dX = p2.x_ - p1.x_;
+	float dY = p2.y_ - p1.y_;
+
+	//We chosse one normal
+	return CVector(-dY, dX);
+}
+
 void OpenGlWindow::voronoi()
 {
 	Triangulation(true);
@@ -598,48 +609,74 @@ void OpenGlWindow::voronoi()
 
 		//If it's an exterior edge, we can skip
 		auto it = _edgeToTriangle.find(edge);
-		if (it != _edgeToTriangle.end())
+		if (it->second.size() == 1)
 		{
-			if (it->second.size() == 1)
-				continue;
+			Triangle t1 = it->second[0];
+			Circle c1 = Circle();
+			c1.CalculateCircle(t1._e1._v1._coords, t1._e1._v2._coords, t1._e2._v2._coords);
+
+			Point interiorP = interiorPoint(edge);
+			CVector normalI = interiorNormal(edge, interiorP);
+			normalI.x *= -1;
+			normalI.y *= -1;
+
+			Point p;
+			p.x_ = c1._center.x_ + (normalI.x * 10);
+			p.y_ = c1._center.y_ + (normalI.y * 10);
+
+			auto itFind1 = std::find(_centers.begin(), _centers.end(), c1._center);
+
+			if (itFind1 == _centers.end())
+			{
+				_indexCenters.push_back(_centers.size());
+				_centers.push_back(c1._center);
+			}
+			else
+			{
+				_indexCenters.push_back(itFind1 - _centers.begin());
+			}
+
+			_centers.push_back(p);
+			_indexCenters.push_back(_centers.size() - 1);
+
 		}
 		else
 		{
-			continue;
+
+			Triangle t1 = it->second[0];
+			Triangle t2 = it->second[1];
+
+			Circle c1 = Circle();
+			c1.CalculateCircle(t1._e1._v1._coords, t1._e1._v2._coords, t1._e2._v2._coords);
+
+			Circle c2 = Circle();
+			c2.CalculateCircle(t2._e1._v1._coords, t2._e1._v2._coords, t2._e2._v2._coords);
+
+			auto itFind1 = std::find(_centers.begin(), _centers.end(), c1._center);
+
+			if (itFind1 == _centers.end())
+			{
+				_indexCenters.push_back(_centers.size());
+				_centers.push_back(c1._center);
+			}
+			else
+			{
+				_indexCenters.push_back(itFind1 - _centers.begin());
+			}
+
+			auto itFind2 = std::find(_centers.begin(), _centers.end(), c2._center);
+
+			if (itFind2 == _centers.end())
+			{
+				_indexCenters.push_back(_centers.size());
+				_centers.push_back(c2._center);
+			}
+			else
+			{
+				_indexCenters.push_back(itFind2 - _centers.begin());
+			}
+
 		}
-
-		Triangle t1 = it->second[0];
-		Triangle t2 = it->second[1];
-
-		Circle c1 = Circle();
-		Circle c2 = Circle();
-		c1.CalculateCircle(t1._e1._v1._coords, t1._e1._v2._coords, t1._e2._v2._coords);
-		c2.CalculateCircle(t2._e1._v1._coords, t2._e1._v2._coords, t2._e2._v2._coords);
-
-		auto itFind1 = std::find(_centers.begin(), _centers.end(), c1._center);
-
-		if (itFind1 == _centers.end())
-		{
-			_indexCenters.push_back(_centers.size());
-			_centers.push_back(c1._center);
-		}
-		else
-		{
-			_indexCenters.push_back(itFind1 - _centers.begin());
-		}
-
-		auto itFind2 = std::find(_centers.begin(), _centers.end(), c2._center);
-
-		if (itFind2 == _centers.end())
-		{
-			_indexCenters.push_back(_centers.size());
-			_centers.push_back(c2._center);
-		}
-		else
-		{
-			_indexCenters.push_back(itFind2 - _centers.begin());
-		}
-
 	}
 }
 
@@ -649,7 +686,7 @@ void OpenGlWindow::paintVoronoi()
 		return;
 
 	GLuint VBO, VAO, EBO;
-	
+
 	std::vector<float> centersVertex = std::vector<float>();
 
 
@@ -678,7 +715,7 @@ void OpenGlWindow::paintVoronoi()
 
 	glBindVertexArray(0);
 
-	glBindVertexArray(VAO);	
+	glBindVertexArray(VAO);
 
 	glDrawElements(GL_LINES, _indexCenters.size(), GL_UNSIGNED_INT, 0);
 	//glDrawArrays(GL_POINTS, 0, centersVertex.size() / 6);
@@ -722,7 +759,7 @@ void OpenGlWindow::GrahamScan()
 		float angle1 = v.angle(currentVec1);
 		float angle2 = v.angle(currentVec2);
 		// We check if we must take the inner or outer angle between the two vectors
-		if (v.crossProduct(currentVec1)<0){
+		if (v.crossProduct(currentVec1) < 0){
 			angle1 = 2 * PI - angle1;
 		}
 		if (v.crossProduct(currentVec2) < 0){
@@ -801,7 +838,7 @@ void OpenGlWindow::GrahamScan()
 
 bool OpenGlWindow::isConvex(CVector& v, CVector& v2) const{
 	float angle = v.angle(v2);
-	if (v.crossProduct(v2)<0){
+	if (v.crossProduct(v2) < 0){
 		angle = 2 * PI - angle;
 	}
 	if (angle > PI){

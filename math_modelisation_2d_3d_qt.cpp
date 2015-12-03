@@ -91,6 +91,12 @@ void Math_modelisation_2D_3D_QT::Voronoi()
 	mainWidget->repaint();
 }
 
+void Math_modelisation_2D_3D_QT::Wireframe()
+{
+	model.wireFrame = !model.wireFrame;
+	mainWidget->repaint();
+}
+
 
 void Math_modelisation_2D_3D_QT::createActions()
 {
@@ -127,6 +133,10 @@ void Math_modelisation_2D_3D_QT::createActions()
 	voronoi->setStatusTip(tr("Voronoi"));
 	connect(voronoi, SIGNAL(triggered()), this, SLOT(Voronoi()));
 
+	wireframe = new QAction(tr("&Show Grid"), this);
+	wireframe->setStatusTip(tr("Show Grid"));
+	connect(wireframe, SIGNAL(triggered()), this, SLOT(Wireframe()));
+
 }
 
 void Math_modelisation_2D_3D_QT::createMenus()
@@ -142,6 +152,7 @@ void Math_modelisation_2D_3D_QT::createMenus()
 	editMenu->addAction(triangulation);
 	editMenu->addAction(flipping);
 	editMenu->addAction(voronoi);
+	editMenu->addAction(wireframe);
 
 
 	menuBar()->addSeparator();

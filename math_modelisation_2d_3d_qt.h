@@ -25,6 +25,7 @@ private slots:
 	void Triangulation();
 	void Flipping();
 	void Voronoi();
+	void Wireframe();
 
 private:
 	void createActions();
@@ -43,6 +44,8 @@ private:
 	QAction *triangulation;
 	QAction *flipping;
 	QAction *voronoi;
+
+	QAction *wireframe;
 
 private:
 	Ui::Math_modelisation_2D_3D_QTClass ui;
