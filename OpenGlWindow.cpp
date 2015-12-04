@@ -151,9 +151,10 @@ void OpenGlWindow::paintGL()
 		bool pointDrawing;
 
 		// Si la structure de points apres algo est vide, alors on affiche les points cliqués en brut
-		if (_pointsAA.size() == 0 || _pointsAA[_currentCluster].size() == 0){
+		if (_pointsAA.size() == 0 /* || _pointsAA[_currentCluster].size() == 0*/){
 			for (int i = 0; i < _points.size(); i++)
 			{
+				pointsF = std::vector<float>();
 				convertPointToFloat(_points[i], pointsF, pointColor);
 				paintPoints(pointsF);
 			}
@@ -162,14 +163,21 @@ void OpenGlWindow::paintGL()
 		else{
 			for (int i = 0; i < _pointsAA.size(); i++)
 			{
-				convertPointToFloat(_pointsAA[i], pointsF, pointColor);
-				paintPoints(pointsF);
-				paintLines(pointsF);
+				//if (_pointsAA[_currentCluster].size() != 0){
+					pointsF = std::vector<float>();		
+					convertPointToFloat(_pointsAA[i], pointsF, pointColor);
+					paintPoints(pointsF);
+					paintLines(pointsF);
+				//}
 			}
 
 			for (int i = 0; i < _points.size(); i++)
 			{
+				pointsC = std::vector<float>();
 				convertPointToFloat(_points[i], pointsC, pointColor2);
+				if (model->mode == model->GRAHAMSCAN){
+					AddBaryCenter(pointsC);
+				}
 				paintPoints(pointsC);
 			}
 		}
