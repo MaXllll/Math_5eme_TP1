@@ -141,7 +141,7 @@ void OpenGlWindow::paintGL()
 	std::vector<float> pointsF = std::vector<float>();
 	//points
 	std::vector<float> pointsC = std::vector<float>();
-
+	/*
 	_points[0].clear();
 	for (size_t i = 0; i < 100; i++)
 	{
@@ -149,7 +149,7 @@ void OpenGlWindow::paintGL()
 		{
 			_points[0].push_back(Point(i * (1.0f / 32.0f), j * (1.0f / 32.0f)));
 		}
-	}
+	}*/
 
 	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS)
 	{
@@ -158,7 +158,7 @@ void OpenGlWindow::paintGL()
 
 		if (model->mode == model->GRAHAMSCAN){
 			GrahamScan();
-			AddBaryCenter(pointsC);
+			//AddBaryCenter(pointsC);
 		}
 		else{
 			JarvisMarch();
@@ -191,8 +191,8 @@ void OpenGlWindow::paintGL()
 			{
 				pointsC = std::vector<float>();
 				convertPointToFloat(_points[i], pointsC, pointColor2);
-				if (model->mode == model->GRAHAMSCAN){
-					AddBaryCenter(pointsC);
+				if (model->mode == model->GRAHAMSCAN &&  _baryCenters.size()!=0 && _points[i].size() > 2){
+					AddBaryCenter(pointsC, i);
 				}
 				paintPoints(pointsC);
 			}
@@ -779,7 +779,8 @@ void OpenGlWindow::GrahamScan()
 	Point baryCenter = Point(0.0f, 0.0f, 0.0f);
 	ComputeBaryCenter(outPoints, baryCenter);
 
-	_baryCenter = baryCenter;
+	_baryCenters.push_back(Point());
+	_baryCenters[_currentCluster] = baryCenter;
 	int i = 0;
 
 	// fonction de tri des points par ordre d'angle en utilisant une lambda
@@ -906,12 +907,12 @@ void OpenGlWindow::ComputeBaryCenter(const std::vector<Point>& points, Point& ba
 }
 
 
-void OpenGlWindow::AddBaryCenter(std::vector<float>& pointsF) const
+void OpenGlWindow::AddBaryCenter(std::vector<float>& pointsF, int i) const
 {
 	//pos
-	pointsF.push_back(_baryCenter.x_);
-	pointsF.push_back(_baryCenter.y_);
-	pointsF.push_back(_baryCenter.z_);
+	pointsF.push_back(_baryCenters[i].x_);
+	pointsF.push_back(_baryCenters[i].y_);
+	pointsF.push_back(_baryCenters[i].z_);
 
 	//color
 	pointsF.push_back(baryCenterColor.x);

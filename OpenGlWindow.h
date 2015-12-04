@@ -51,7 +51,7 @@ private:
 	Point* _movingPointPtr = nullptr; 
 	bool _hasClick = false;
 	Point _baryCenter;
-
+	std::vector<Point> _baryCenters = std::vector<Point>();
 
 	//Triangulation
 	std::vector<Vertex> _vertex = std::vector<Vertex>();
@@ -93,7 +93,7 @@ private:
 	void ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const;
 	void printVector(const std::vector<Point>& points) const;
 	void paintLines(std::vector<float>& pointsF) const;
-	void AddBaryCenter(std::vector<float>& pointsF) const;
+	void AddBaryCenter(std::vector<float>& pointsF, int i) const;
 	bool isConvex(CVector& v, CVector& v2) const;
 	bool intersection(const Point& a, const Point& b, const Point& c, const Point& d, Point& intersec) const;
 	float determinant(float matrix[2][2]) const;
