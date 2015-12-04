@@ -72,6 +72,7 @@ private:
 	void findTrianglePoints(const Triangle& t1, const Triangle& t2, std::vector<Vertex>& outVec) const;
 	void AddTriangle(Vertex v1, Vertex v2, Vertex v3);
 	void feedIndexGrid();
+	double convertViewportToOpenGLCoordinate(double x);
 
 	int pointIndex = 0;
 
