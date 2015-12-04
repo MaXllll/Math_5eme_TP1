@@ -48,6 +48,7 @@ private:
 	std::vector<GLuint> indexGrid = std::vector<GLuint>();
 	
 	Point _movingPoint;
+	Point* _movingPointPtr = nullptr; 
 	bool _hasClick = false;
 	Point _baryCenter;
 
@@ -87,7 +88,7 @@ private:
 
 
 	//Utils
-	void searchClosedPoint(const Point click, const std::vector<std::vector<Point>>& points, Point& p) const;
+	void searchClosedPoint(const Point click, std::vector<std::vector<Point>>& points);
 	void convertPointToFloat(const std::vector<Point>& points, std::vector<float>& pointsF, const glm::vec3 color) const;
 	void ComputeBaryCenter(const std::vector<Point>& points, Point& baryCenter) const;
 	void printVector(const std::vector<Point>& points) const;
