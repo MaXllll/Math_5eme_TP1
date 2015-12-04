@@ -142,6 +142,7 @@ void OpenGlWindow::paintGL()
 	//points
 	std::vector<float> pointsC = std::vector<float>();
 
+	_points[0].clear();
 	for (size_t i = 0; i < 100; i++)
 	{
 		for (size_t j = 0; j < 100; j++)
