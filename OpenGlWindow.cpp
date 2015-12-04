@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <chrono>
+
 // SOIL
 #include <SOIL.h>
 
@@ -119,6 +121,10 @@ void OpenGlWindow::paintPoints(std::vector<float>& pointsF) const
 
 void OpenGlWindow::paintGL()
 {
+	// Tips for time calculation
+	//
+	// function body
+
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -135,6 +141,15 @@ void OpenGlWindow::paintGL()
 	std::vector<float> pointsF = std::vector<float>();
 	//points
 	std::vector<float> pointsC = std::vector<float>();
+
+	for (size_t i = 0; i < 100; i++)
+	{
+		for (size_t j = 0; j < 100; j++)
+		{
+			_points[0].push_back(Point(i * (1.0f / 32.0f), j * (1.0f / 32.0f)));
+		}
+	}
+
 	if (model->mode == model->GRAHAMSCAN || model->mode == model->JARVIS)
 	{
 
@@ -314,7 +329,8 @@ void OpenGlWindow::Triangulation(bool flipping)
 
 			findTrianglePoints(t1, t2, tPoints);
 
-			_edges.erase(std::find(_edges.begin(), _edges.end(), edge));
+			if (std::find(_edges.begin(), _edges.end(), edge) != _edges.end())
+				_edges.erase(std::find(_edges.begin(), _edges.end(), edge));
 			_edgeToTriangle.erase(_edgeToTriangle.find(edge));
 			if (std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1) != _trianglesIndex.end())
 				_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1));
@@ -741,6 +757,7 @@ void OpenGlWindow::paintVoronoi()
 
 void OpenGlWindow::GrahamScan()
 {
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now(); //<= at the beginning of the function
 	if (_points.size() == 0 || _points[_currentCluster].size() < 3){
 		if (_pointsAA.size() < _points.size()){
 			_pointsAA.push_back(std::vector<Point>());
@@ -840,11 +857,16 @@ void OpenGlWindow::GrahamScan()
 
 	} while (pivot != sInit || avance == false);
 
-	_pointsAA.at(_currentCluster).clear();
+	if (_pointsAA.size() > 0)
+		_pointsAA.at(_currentCluster).clear();
 	//.clear();
 	_pointsAA.insert(_pointsAA.begin() + _currentCluster, outPoints);
 	_pointsAA[_currentCluster].push_back(outPoints[0]);
 	//return outPoints;
+
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+	float duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();  //     <= at the end of the function
+	std::cout << duration << std::endl;
 }
 
 bool OpenGlWindow::isConvex(CVector& v, CVector& v2) const{
@@ -899,6 +921,8 @@ void OpenGlWindow::JarvisMarch()
 		}
 		return;
 	}
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now(); //<= at the beginning of the function
+
 	//std::cout << "Jarvis March" << std::endl;
 	std::vector<Point> outPoints = std::vector<Point>(_points[_currentCluster].begin(), _points[_currentCluster].end());
 
@@ -946,10 +970,10 @@ void OpenGlWindow::JarvisMarch()
 	} while (indexFirst != i);
 
 	//std::cout << " Points cliques : " << outPoints.size() << " " << std::endl;
-	printVector(outPoints);
+	//printVector(outPoints);
 	//std::cout << " Points affiches : " << polyPoints.size() << " " << std::endl;
 	int size = polyPoints.size();
-	printVector(polyPoints);
+	//printVector(polyPoints);
 	//std::cout << "\n" << std::endl;
 	//if (polyPoints.size() > 2)
 
@@ -958,6 +982,10 @@ void OpenGlWindow::JarvisMarch()
 	//.clear();
 	_pointsAA.insert(_pointsAA.begin() + _currentCluster, polyPoints);
 	_pointsAA[_currentCluster].push_back(polyPoints[0]);
+
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+	float duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();  //     <= at the end of the function
+	std::cout << duration << std::endl;
 
 	//else
 	//_pointsAA.insert(_pointsAA.begin() + _currentCluster, _points[_currentCluster]);
