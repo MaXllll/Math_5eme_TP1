@@ -49,6 +49,8 @@ void OpenGlWindow::initializeGL()
 		initializePolygone();
 	}
 
+
+	model->mode = model->JARVIS;
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
 	// Initialize GLEW to setup the OpenGL Function pointers
@@ -147,7 +149,7 @@ void OpenGlWindow::paintGL()
 	{
 		for (size_t j = 0; j < 100; j++)
 		{
-			_points[0].push_back(Point(i * (1.0f / 32.0f), j * (1.0f / 32.0f)));
+			_points[0].push_back(Point(convertViewportToOpenGLCoordinate(i * (1.0f / 32.0f)), convertViewportToOpenGLCoordinate(j * (1.0f / 32.0f))));
 		}
 	}*/
 
@@ -988,6 +990,7 @@ void OpenGlWindow::JarvisMarch()
 	//if (polyPoints.size() > 2)
 
 	/*std::vector<Point> _pointsCurr = */
+	if (_pointsAA.size() > 0)
 	_pointsAA.at(_currentCluster).clear();
 	//.clear();
 	_pointsAA.insert(_pointsAA.begin() + _currentCluster, polyPoints);
@@ -1005,7 +1008,7 @@ void OpenGlWindow::JarvisMarch()
 
 #pragma region Utils
 
-double convertViewportToOpenGLCoordinate(double x)
+double OpenGlWindow::convertViewportToOpenGLCoordinate(double x)
 {
 	return (x * 2) - 1;
 }
