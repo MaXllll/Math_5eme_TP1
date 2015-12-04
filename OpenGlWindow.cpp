@@ -998,13 +998,15 @@ void OpenGlWindow::mouseMoveEvent(QMouseEvent *event)
 {
 	if (model->splineMode == model->MOVEPOINT && _hasClick)
 	{
-		//std::cout << "MovingPoint Begin TONPAYRE : " << _movingPoint.x_ << " " << _movingPoint.y_ << std::endl;
-		(*_movingPointPtr).x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
-		(*_movingPointPtr).y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
-		(*_movingPointPtr).z_ = 0.0f;
-		//std::cout << "MovingPoint End TONPAYRE: " << (*_movingPointPtr).x_ << " " << (*_movingPointPtr).y_ << std::endl;
-		//std::cout << "MovingPoint Points TONPAYRE: " << _points[_currentCluster][0].x_ << " " << _points[_currentCluster][0].y_ << std::endl;
-		this->update();
+		if (_movingPointPtr != nullptr){
+			//std::cout << "MovingPoint Begin TONPAYRE : " << _movingPoint.x_ << " " << _movingPoint.y_ << std::endl;
+			(*_movingPointPtr).x_ = convertViewportToOpenGLCoordinate(event->x() / (double)this->width());
+			(*_movingPointPtr).y_ = -convertViewportToOpenGLCoordinate(event->y() / (double)this->height());
+			(*_movingPointPtr).z_ = 0.0f;
+			//std::cout << "MovingPoint End TONPAYRE: " << (*_movingPointPtr).x_ << " " << (*_movingPointPtr).y_ << std::endl;
+			//std::cout << "MovingPoint Points TONPAYRE: " << _points[_currentCluster][0].x_ << " " << _points[_currentCluster][0].y_ << std::endl;
+			this->update();
+		}
 	}
 }
 
