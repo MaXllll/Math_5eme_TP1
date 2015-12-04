@@ -316,10 +316,14 @@ void OpenGlWindow::Triangulation(bool flipping)
 
 			_edges.erase(std::find(_edges.begin(), _edges.end(), edge));
 			_edgeToTriangle.erase(_edgeToTriangle.find(edge));
-			_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1));
-			_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t2));
-			_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t1));
-			_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t2));
+			if (std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1) != _trianglesIndex.end())
+				_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t1));
+			if (std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t2) != _trianglesIndex.end())
+				_trianglesIndex.erase(std::find(_trianglesIndex.begin(), _trianglesIndex.end(), t2));
+			if (std::find(_triangles.begin(), _triangles.end(), t1) != _triangles.end())
+				_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t1));
+			if (std::find(_triangles.begin(), _triangles.end(), t2) != _triangles.end())
+				_triangles.erase(std::find(_triangles.begin(), _triangles.end(), t2));
 
 			std::vector<Edge> tEdges = std::vector<Edge>();
 			tEdges.push_back(t1._e1);
