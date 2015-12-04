@@ -349,8 +349,10 @@ void OpenGlWindow::Triangulation(bool flipping)
 				}
 			}
 
-			tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v1));
-			tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v2));
+			if (std::find(tPoints.begin(), tPoints.end(), edge._v1) != tPoints.end())
+				tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v1));
+			if (std::find(tPoints.begin(), tPoints.end(), edge._v2) != tPoints.end())
+				tPoints.erase(std::find(tPoints.begin(), tPoints.end(), edge._v2));
 
 			AddTriangle(edge._v1, tPoints[0], tPoints[1]);
 			AddTriangle(edge._v2, tPoints[0], tPoints[1]);
@@ -395,8 +397,8 @@ bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2) const
 	Circle c1 = Circle();
 	c1.CalculateCircle(tPoints[0]._coords, tPoints[1]._coords, tPoints[2]._coords);
 
-	//if (tPoints.size() < 4)
-	//	return false;
+	if (tPoints.size() < 4)
+		return true;
 
 	if (length(c1._center, tPoints[3]._coords) < c1._radius)
 		return false;
@@ -612,6 +614,8 @@ void OpenGlWindow::voronoi()
 
 		//If it's an exterior edge, we can skip
 		auto it = _edgeToTriangle.find(edge);
+		if (it->second.size() == 0)
+			continue;
 		if (it->second.size() == 1)
 		{
 			Triangle t1 = it->second[0];
