@@ -336,6 +336,9 @@ void OpenGlWindow::Triangulation(bool flipping)
 				{
 					edgeToCheck.push_back(edgeC);
 					auto itC = _edgeToTriangle.find(edgeC);
+					if (itC == _edgeToTriangle.end())
+						continue;
+
 					if (itC->second[0] == t1 || itC->second[0] == t2){
 						itC->second.erase(itC->second.begin());
 						continue;
@@ -392,8 +395,8 @@ bool OpenGlWindow::isDelaunay(Triangle t1, Triangle t2) const
 	Circle c1 = Circle();
 	c1.CalculateCircle(tPoints[0]._coords, tPoints[1]._coords, tPoints[2]._coords);
 
-	if (tPoints.size() < 4)
-		return false;
+	//if (tPoints.size() < 4)
+	//	return false;
 
 	if (length(c1._center, tPoints[3]._coords) < c1._radius)
 		return false;
@@ -1019,7 +1022,7 @@ void OpenGlWindow::convertPointToFloat(const std::vector<Point>& points, std::ve
 	{
 		pointsF.push_back(points[i].x_);
 		pointsF.push_back(points[i].y_);
-		pointsF.push_back(points[i].z_);
+		pointsF.push_back(0);
 		pointsF.push_back(color.x);
 		pointsF.push_back(color.y);
 		pointsF.push_back(color.z);
