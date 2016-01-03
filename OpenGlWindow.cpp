@@ -283,7 +283,7 @@ void OpenGlWindow::Triangulation(bool flipping)
 				continue;
 			}
 
-			//We need to choose an point that doesn't belong to the current edge 
+			//We need to choose a point that doesn't belong to the current edge 
 			Point interiorP = interiorPoint(edge);
 			CVector normalI = interiorNormal(edge, interiorP);
 			CVector newEdge = CVector(edge._v1._coords, newPoint);
